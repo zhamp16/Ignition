@@ -36,16 +36,20 @@ try:
     endTriggers = sourceChangeoverSeg.getSegmentEndTriggers()
     if len(endTriggers) > 0:
         endTrigger = endTriggers[0]
-        endTrigger
         changeoverSettings['fixedDuration'] = endTrigger.getFixedDuration()
         changeoverSettings['mode'] = endTrigger.getMode()
         changeoverSettings['timeout'] = endTrigger.getTimeout()
-        changeoverSettings['auto'] = endTrigger.getPropertyValue('Auto')
+
+        # Get Auto property from child properties
+        childProps = endTrigger.getChildProperties()
+        if 'Auto' in childProps:
+            autoValue = str(childProps['Auto']).split('=')[-1]
+            changeoverSettings['auto'] = autoValue.lower() == 'true'
 
         print "Changeover End Trigger:"
         print "  - Mode: " + str(changeoverSettings['mode'])
         print "  - Fixed Duration: " + str(changeoverSettings['fixedDuration']) + " minute(s)"
-        print "  - Auto End: " + str(changeoverSettings['auto'])
+        print "  - Auto End: " + str(changeoverSettings.get('auto', 'N/A'))
         print "  - Timeout: " + str(changeoverSettings['timeout'])
 
     # Get changeover begin trigger
@@ -159,8 +163,12 @@ for opSeg in targetOperList:
                     print "  - Set Mode: " + str(changeoverSettings['mode'])
 
                 if 'auto' in changeoverSettings:
-                    targetEndTrigger.setPropertyValue('Auto', changeoverSettings['auto'])
-                    print "  - Set Auto End: " + str(changeoverSettings['auto'])
+                    # Set Auto property through child properties
+                    childProps = targetEndTrigger.getChildProperties()
+                    if 'Auto' in childProps:
+                        autoChild = childProps['Auto']
+                        autoChild.setValue(changeoverSettings['auto'])
+                        print "  - Set Auto End: " + str(changeoverSettings['auto'])
 
                 if 'timeout' in changeoverSettings:
                     targetEndTrigger.setTimeout(changeoverSettings['timeout'])
