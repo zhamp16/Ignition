@@ -32,17 +32,19 @@ try:
     settings['trackProgressBy'] = sourceOpDef.getTrackProgressBy()
 
     # ========== CHANGEOVER SETTINGS FROM TRIGGERS ==========
-    # Get changeover end trigger (this has duration and mode)
+    # Get changeover end trigger (this has duration, mode, and auto)
     endTriggers = sourceChangeoverSeg.getSegmentEndTriggers()
     if len(endTriggers) > 0:
         endTrigger = endTriggers[0]
         changeoverSettings['fixedDuration'] = endTrigger.getFixedDuration()
         changeoverSettings['mode'] = endTrigger.getMode()
         changeoverSettings['timeout'] = endTrigger.getTimeout()
+        changeoverSettings['auto'] = endTrigger.getPropertyValue('Auto')
 
         print "Changeover End Trigger:"
         print "  - Mode: " + str(changeoverSettings['mode'])
         print "  - Fixed Duration: " + str(changeoverSettings['fixedDuration']) + " minute(s)"
+        print "  - Auto End: " + str(changeoverSettings['auto'])
         print "  - Timeout: " + str(changeoverSettings['timeout'])
 
     # Get changeover begin trigger
@@ -142,7 +144,7 @@ for opSeg in targetOperList:
             print "\n========== Applying Changeover Settings =========="
             print "Changeover Segment: " + opSeg.getName()
 
-            # Apply changeover end trigger settings (duration and mode)
+            # Apply changeover end trigger settings (duration, mode, and auto)
             targetEndTriggers = opSeg.getSegmentEndTriggers()
             if len(targetEndTriggers) > 0 and changeoverSettings:
                 targetEndTrigger = targetEndTriggers[0]
@@ -154,6 +156,10 @@ for opSeg in targetOperList:
                 if 'mode' in changeoverSettings:
                     targetEndTrigger.setMode(changeoverSettings['mode'])
                     print "  - Set Mode: " + str(changeoverSettings['mode'])
+
+                if 'auto' in changeoverSettings:
+                    targetEndTrigger.setPropertyValue('Auto', changeoverSettings['auto'])
+                    print "  - Set Auto End: " + str(changeoverSettings['auto'])
 
                 if 'timeout' in changeoverSettings:
                     targetEndTrigger.setTimeout(changeoverSettings['timeout'])
@@ -246,5 +252,6 @@ print "  - Track Progress By: Copied"
 print "  - Idle Settings: Copied"
 print "  - Changeover Duration: %s minute(s)" % str(changeoverSettings.get('fixedDuration', 'N/A'))
 print "  - Changeover Mode: %s" % str(changeoverSettings.get('mode', 'N/A'))
+print "  - Auto End Changeover: %s" % str(changeoverSettings.get('auto', 'N/A'))
 print "  - Production Settings: Copied"
 print "  - Infeed/Outfeed Equipment: Set to " + targetEquipmentName
