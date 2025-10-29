@@ -1,0 +1,536 @@
+>>> 
+========== CHANGEOVER SEGMENT PROPERTIES ==========
+Segment Name: 2019 ProV1-Acushnet:Ball Plant 03:OPP:Line 08_CO
+Segment Type: OperationsSegment
+
+--- All Properties (via getPropertyValue) ---
+ScheduledDuration = None
+AutoEnd = None
+Duration = None
+AutoEndChangeover = None
+ChangeoverDuration = None
+Scheduled Duration = None
+Auto End = None
+
+--- All Available Methods on Changeover Segment ---
+  getAdditionalTaskList
+  getAllArtifactNames
+  getAllCustomProperties
+  getAllCustomPropeties
+  getAllReferenceProperties
+  getAllowedChildTypes
+  getAllowedParentTypes
+  getAndClearNotificationMessage
+  getArtifactCount
+  getArtifactNames
+  getArtifactProperties
+  getArtifactProperty
+  getArtifactValueByName
+  getArtifactValueByUUID
+  getAssociatedEquipmentPathsForMESObject
+  getAssociatedObjects
+  getChildCollection
+  getChildCollectionIncludingRemoved
+  getClass
+  getComplexProperty
+  getComplexPropertyByKind
+  getComplexPropertyByUUID
+  getComplexPropertyCollection
+  getComplexPropertyCount
+  getComplexPropertyItemNames
+  getComplexPropertyTypeDisplayNames
+  getComplexPropertyTypeMatchedNames
+  getComplexPropertyTypeNames
+  getComplexPropertyTypeNamesWithEnableReferenceSync
+  getComplexPropertyTypes
+  getCoreProperties
+  getCoreProperty
+  getCorePropertyValue
+  getCreatorType
+  getCustomProperties
+  getCustomPropertiesFull
+  getCustomPropertyDescription
+  getCustomPropertyEnabled
+  getCustomPropertyUnits
+  getCustomPropertyValueMap
+  getCustomPropertyValues
+  getDBIndexForColumn
+  getDBIndexList
+  getDefinitionSegment
+  getDefinitionSegmentLink
+  getDependencyPropagatableProperties
+  getDerivedFromRefType
+  getDerivedFromRefUUID
+  getDescription
+  getEquipment
+  getEquipmentLink
+  getEquipmentOrNull
+  getEquipmentProperty
+  getEquipmentPropertyByName
+  getEventList
+  getExceptionLog
+  getExtendedBaseNameList
+  getInheritedProperties
+  getLastUpdated
+  getLinksToRelatedObjects
+  getMESObjectType
+  getMESObjectTypeName
+  getMaterialCount
+  getMaterialProperties
+  getMaterialProperty
+  getMaterialPropertyID
+  getModifiedMESProperties
+  getName
+  getNewEventName
+  getOperationsDefinition
+  getOperationsDefinitionLink
+  getOrCreateComplexProperty
+  getParentCollection
+  getParentCollectionIncludingRemoved
+  getPathsToDispatch
+  getPendingChanges
+  getPendingSets
+  getPersonnelCount
+  getPersonnelProperties
+  getPersonnelProperty
+  getPersonnelPropertyID
+  getPreviousCorePropertyValue
+  getPrimaryBeginTrigger
+  getPrimaryEndTrigger
+  getPrimaryParentLink
+  getProductionSettingsCount
+  getProductionSettingsProperties
+  getProductionSettingsProperty
+  getProductionSettingsPropertyByName
+  getProductionSettingsPropertyID
+  getProperty
+  getPropertyCollection
+  getPropertyValue
+  getReadLock
+  getReadLockHoldCount
+  getReferenceComplexPropertyTypeNames
+  getReferenceProperties
+  getRemovedChildMESObjects
+  getRemovedMESObjects
+  getRemovedParentMESObjects
+  getRemovedProperties
+  getSampleDefinitionProperties
+  getSegmentBeginTrigger
+  getSegmentBeginTriggers
+  getSegmentEndTrigger
+  getSegmentEndTriggers
+  getSupplementalEquipmentCount
+  getSupplementalEquipmentProperties
+  getSupplementalEquipmentProperty
+  getSupplementalEquipmentPropertyID
+  getSynchronizationStrategy
+  getTextualDescriptions
+  getTrackChangesMode
+  getUUID
+  getUUIDProperty
+  getValidationForProductionMessages
+  getVersion
+  getVersionList
+  getWriteLock
+  setArtifactValue
+  setCorePropertyData
+  setCorePropertyValue
+  setCreatorType
+  setCustomPropertyDescription
+  setCustomPropertyEnabled
+  setCustomPropertyUnits
+  setCustomPropertyValueMap
+  setCustomPropertyValues
+  setDerivedFromRefType
+  setDerivedFromRefUUID
+  setDescription
+  setEnabled
+  setFaulted
+  setForceReload
+  setInitializing
+  setLastUpdated
+  setLazyLoadedPropertyCollection
+  setModified
+  setName
+  setOldVersion
+  setPendingChangeLog
+  setPropertyValue
+  setUUID
+  setValidName
+  setVersion
+
+
+========== CHANGEOVER PRODUCTION SETTINGS ==========
+ProductionSettings Count: 8
+
+--- All Available Methods on ProductionSettings ---
+  get
+  getAllCustomProperties
+  getAllCustomPropeties
+  getAllowNull
+  getBaseName
+  getChildProperties
+  getClass
+  getComplexProperty
+  getCustomProperties
+  getCustomPropertyDescription
+  getCustomPropertyEnabled
+  getCustomPropertyUnits
+  getCustomPropertyValue
+  getCustomPropertyValues
+  getDBColumnDef
+  getDBIndexList
+  getDataType
+  getDescription
+  getDisplayName
+  getEquipmentRef
+  getEquipmentRefProperty
+  getEquipmentRefType
+  getEquipmentRefUUID
+  getIdleModeRef
+  getIdleModeRefProperty
+  getIdleModeRefType
+  getIdleModeRefUUID
+  getInfeedEquipmentRef
+  getInfeedEquipmentRefProperty
+  getInfeedEquipmentRefType
+  getInfeedEquipmentRefUUID
+  getInfeedScale
+  getInfeedUnits
+  getInheritedProperties
+  getMESObject
+  getMESPropertyID
+  getMaxSize
+  getMaxVersion
+  getModeRef
+  getModeRefProperty
+  getModeRefType
+  getModeRefUUID
+  getModifiedProperties
+  getName
+  getNameCollisionPattern
+  getOEERate
+  getOldName
+  getOldTableName
+  getOutfeedEquipmentRef
+  getOutfeedEquipmentRefType
+  getOutfeedEquipmentRefUUID
+  getOutfeedUnits
+  getPackageCount
+  getParent
+  getParentPropertyUUID
+  getPropertyCollection
+  getPropertyPath
+  getPropertyPathByKind
+  getPropertyPathRenaming
+  getPropertyUUID
+  getReferenceOptions
+  getReferenceProperties
+  getRejectScale
+  getRejectUnits
+  getReservedNamesLowercase
+  getStatus
+  getTableName
+  getTextualDescriptions
+  getUse
+  getValidationForProductionMessages
+  getValidationPattern
+  getValidationSize
+  getValue
+  getValueChangeTimeStamp
+  setCustomPropertyDescription
+  setCustomPropertyEnabled
+  setCustomPropertyUnits
+  setCustomPropertyValue
+  setCustomPropertyValues
+  setData
+  setDirty
+  setEnabled
+  setEquipmentRef
+  setEquipmentRefType
+  setEquipmentRefUUID
+  setIdleModeRef
+  setIdleModeRefType
+  setIdleModeRefUUID
+  setInfeedEquipmentRef
+  setInfeedEquipmentRefType
+  setInfeedEquipmentRefUUID
+  setInfeedScale
+  setInfeedUnits
+  setMaxVersion
+  setModeRef
+  setModeRefType
+  setModeRefUUID
+  setName
+  setNew
+  setOEERate
+  setOutfeedEquipmentRef
+  setOutfeedEquipmentRefType
+  setOutfeedEquipmentRefUUID
+  setOutfeedUnits
+  setPackageCount
+  setPropertyUUID
+  setRejectScale
+  setRejectUnits
+  setStrictTagMode
+  setUse
+  setValue
+
+--- Trying to call getter methods ---
+getAllCustomProperties() = []
+getAllCustomPropeties() = []
+getAllowNull() = False
+getBaseName() = Line 08
+getChildProperties() = {u'EquipmentRef': EquipmentRef=Line, Line 08, u'EquipmentRefType': EquipmentRefType=Line, u'EquipmentRefUUID': EquipmentRefUUID=31586f53-b873-4f38-a393-ffbb823bf163, u'ModeRef': ModeRef=Equipment Mode, Changeover, u'ModeRefType': ModeRefType=EquipmentMode, u'ModeRefUUID': ModeRefUUID=e1c89946-109f-493b-a133-1c6b3e07e06f, u'IdleModeRefType': IdleModeRefType=null, u'IdleModeRefUUID': IdleModeRefUUID=null, u'IdleModeRef': IdleModeRef=, u'OEERate': OEERate=100.0, u'InfeedEquipmentRef': InfeedEquipmentRef=Line, Line 08, u'InfeedEquipmentRefUUID': InfeedEquipmentRefUUID=31586f53-b873-4f38-a393-ffbb823bf163, u'InfeedEquipmentRefType': InfeedEquipmentRefType=Line, u'InfeedScale': InfeedScale=1.0, u'RejectScale': RejectScale=1.0, u'OutfeedEquipmentRef': OutfeedEquipmentRef=Line, Line 08, u'OutfeedEquipmentRefUUID': OutfeedEquipmentRefUUID=31586f53-b873-4f38-a393-ffbb823bf163, u'OutfeedEquipmentRefType': OutfeedEquipmentRefType=Line, u'PackageCount': PackageCount=1.0, u'InfeedUnits': InfeedUnits=null, u'OutfeedUnits': OutfeedUnits=null, u'RejectUnits': RejectUnits=null, u'StrictTagMode': StrictTagMode=false}
+getComplexProperty() = {EquipmentRef=Line, Line 08, EquipmentRefType=Line, EquipmentRefUUID=31586f53-b873-4f38-a393-ffbb823bf163, ModeRef=Equipment Mode, Changeover, ModeRefType=EquipmentMode, ModeRefUUID=e1c89946-109f-493b-a133-1c6b3e07e06f, IdleModeRefType=null, IdleModeRefUUID=null, IdleModeRef=, OEERate=100.0, InfeedEquipmentRef=Line, Line 08, InfeedEquipmentRefUUID=31586f53-b873-4f38-a393-ffbb823bf163, InfeedEquipmentRefType=Line, InfeedScale=1.0, RejectScale=1.0, OutfeedEquipmentRef=Line, Line 08, OutfeedEquipmentRefUUID=31586f53-b873-4f38-a393-ffbb823bf163, OutfeedEquipmentRefType=Line, PackageCount=1.0, InfeedUnits=null, OutfeedUnits=null, RejectUnits=null, StrictTagMode=false}
+getCustomProperties() = {}
+getCustomPropertyValues() = {}
+getDBColumnDef() = com.sepasoft.production.common.db.base.DBColumnDef@4166d17d
+getDBIndexList() = [IX_EquipmentRef:EquipmentRefUUID,Enable]
+getDataType() = None
+getDescription() = Production Settings are added as needed to define the rate of production of a segment.
+getDisplayName() = Line 08
+getEquipmentRef() = (type: Line,  uuid: 31586f53-b873-4f38-a393-ffbb823bf163)
+getEquipmentRefProperty() = EquipmentRef=Line, Line 08
+getEquipmentRefType() = Line
+getEquipmentRefUUID() = 31586f53-b873-4f38-a393-ffbb823bf163
+getIdleModeRef() = None
+getIdleModeRefProperty() = IdleModeRef=
+getIdleModeRefType() = None
+getIdleModeRefUUID() = None
+getInfeedEquipmentRef() = (type: Line,  uuid: 31586f53-b873-4f38-a393-ffbb823bf163)
+getInfeedEquipmentRefProperty() = InfeedEquipmentRef=Line, Line 08
+getInfeedEquipmentRefType() = Line
+getInfeedEquipmentRefUUID() = 31586f53-b873-4f38-a393-ffbb823bf163
+getInfeedScale() = 1.0
+getInfeedUnits() = None
+getInheritedProperties() = {}
+getMESObject() = OperationsSegment (6f72d11d-3bf1-4c1f-84c3-3985ec21cd94, 2019 ProV1-Acushnet:Ball Plant 03:OPP:Line 08_CO, 0 parents, 0 children, 0 custom properties, 8 complex properties, artifacts not loaded)
+getMESPropertyID() = com.sepasoft.production.common.model.mesobject.core.MESPropertyID@bee8eba7
+getMaxSize() = 261
+getMaxVersion() = None
+getModeRef() = (type: Equipment Mode,  uuid: e1c89946-109f-493b-a133-1c6b3e07e06f)
+getModeRefProperty() = ModeRef=Equipment Mode, Changeover
+getModeRefType() = EquipmentMode
+getModeRefUUID() = e1c89946-109f-493b-a133-1c6b3e07e06f
+getName() = Line 08
+getNameCollisionPattern() = %s (%d)
+getOEERate() = 100.0
+getOldName() = None
+getOutfeedEquipmentRef() = (type: Line,  uuid: 31586f53-b873-4f38-a393-ffbb823bf163)
+getOutfeedEquipmentRefType() = Line
+getOutfeedEquipmentRefUUID() = 31586f53-b873-4f38-a393-ffbb823bf163
+getOutfeedUnits() = None
+getPackageCount() = 1.0
+getParent() = {u'Line 08': {EquipmentRef=Line, Line 08, EquipmentRefType=Line, EquipmentRefUUID=31586f53-b873-4f38-a393-ffbb823bf163, ModeRef=Equipment Mode, Changeover, ModeRefType=EquipmentMode, ModeRefUUID=e1c89946-109f-493b-a133-1c6b3e07e06f, IdleModeRefType=null, IdleModeRefUUID=null, IdleModeRef=, OEERate=100.0, InfeedEquipmentRef=Line, Line 08, InfeedEquipmentRefUUID=31586f53-b873-4f38-a393-ffbb823bf163, InfeedEquipmentRefType=Line, InfeedScale=1.0, RejectScale=1.0, OutfeedEquipmentRef=Line, Line 08, OutfeedEquipmentRefUUID=31586f53-b873-4f38-a393-ffbb823bf163, OutfeedEquipmentRefType=Line, PackageCount=1.0, InfeedUnits=null, OutfeedUnits=null, RejectUnits=null, StrictTagMode=false}, u'Line 08:Feeders': {EquipmentRef=Line Cell Group, Feeders, EquipmentRefType=LineCellGroup, EquipmentRefUUID=6016b43f-bf06-4a28-aa24-63a7ad3ca124, ModeRef=Equipment Mode, Changeover, ModeRefType=EquipmentMode, ModeRefUUID=e1c89946-109f-493b-a133-1c6b3e07e06f, IdleModeRefType=null, IdleModeRefUUID=null, IdleModeRef=, OEERate=100.0, InfeedEquipmentRef=, InfeedEquipmentRefUUID=null, InfeedEquipmentRefType=null, InfeedScale=1.0, RejectScale=1.0, OutfeedEquipmentRef=, OutfeedEquipmentRefUUID=null, OutfeedEquipmentRefType=null, PackageCount=1.0, InfeedUnits=null, OutfeedUnits=null, RejectUnits=null, StrictTagMode=false}, u'Line 08:Feeders:Far Feeder': {EquipmentRef=Line Cell, Far Feeder, EquipmentRefType=LineCell, EquipmentRefUUID=cb9d981f-ad81-4dd2-960f-2d63afdfe74e, ModeRef=Equipment Mode, Changeover, ModeRefType=EquipmentMode, ModeRefUUID=e1c89946-109f-493b-a133-1c6b3e07e06f, IdleModeRefType=null, IdleModeRefUUID=null, IdleModeRef=, OEERate=100.0, InfeedEquipmentRef=, InfeedEquipmentRefUUID=null, InfeedEquipmentRefType=null, InfeedScale=1.0, RejectScale=1.0, OutfeedEquipmentRef=, OutfeedEquipmentRefUUID=null, OutfeedEquipmentRefType=null, PackageCount=1.0, InfeedUnits=null, OutfeedUnits=null, RejectUnits=null, StrictTagMode=false}, u'Line 08:Feeders:Near Feeder': {EquipmentRef=Line Cell, Near Feeder, EquipmentRefType=LineCell, EquipmentRefUUID=6bbd65aa-8a9d-4d20-9167-c5a33b99beb1, ModeRef=Equipment Mode, Changeover, ModeRefType=EquipmentMode, ModeRefUUID=e1c89946-109f-493b-a133-1c6b3e07e06f, IdleModeRefType=null, IdleModeRefUUID=null, IdleModeRef=, OEERate=100.0, InfeedEquipmentRef=, InfeedEquipmentRefUUID=null, InfeedEquipmentRefType=null, InfeedScale=1.0, RejectScale=1.0, OutfeedEquipmentRef=, OutfeedEquipmentRefUUID=null, OutfeedEquipmentRefType=null, PackageCount=1.0, InfeedUnits=null, OutfeedUnits=null, RejectUnits=null, StrictTagMode=false}, u'Line 08:Main Conveyor': {EquipmentRef=Line Cell, Main Conveyor, EquipmentRefType=LineCell, EquipmentRefUUID=e4581155-3ce1-4994-aeb1-d6855a6c56f3, ModeRef=Equipment Mode, Changeover, ModeRefType=EquipmentMode, ModeRefUUID=e1c89946-109f-493b-a133-1c6b3e07e06f, IdleModeRefType=null, IdleModeRefUUID=null, IdleModeRef=, OEERate=100.0, InfeedEquipmentRef=, InfeedEquipmentRefUUID=null, InfeedEquipmentRefType=null, InfeedScale=1.0, RejectScale=1.0, OutfeedEquipmentRef=, OutfeedEquipmentRefUUID=null, OutfeedEquipmentRefType=null, PackageCount=1.0, InfeedUnits=null, OutfeedUnits=null, RejectUnits=null, StrictTagMode=false}, u'Line 08:Orienter': {EquipmentRef=Line Cell, Orienter, EquipmentRefType=LineCell, EquipmentRefUUID=21cc490e-5efe-4c6f-a31c-2d667853c4d1, ModeRef=Equipment Mode, Changeover, ModeRefType=EquipmentMode, ModeRefUUID=e1c89946-109f-493b-a133-1c6b3e07e06f, IdleModeRefType=null, IdleModeRefUUID=null, IdleModeRef=, OEERate=100.0, InfeedEquipmentRef=, InfeedEquipmentRefUUID=null, InfeedEquipmentRefType=null, InfeedScale=1.0, RejectScale=1.0, OutfeedEquipmentRef=, OutfeedEquipmentRefUUID=null, OutfeedEquipmentRefType=null, PackageCount=1.0, InfeedUnits=null, OutfeedUnits=null, RejectUnits=null, StrictTagMode=false}, u'Line 08:PAD Printer': {EquipmentRef=Line Cell, PAD Printer, EquipmentRefType=LineCell, EquipmentRefUUID=99af4d9d-64e4-44de-8562-3fa4627a31bb, ModeRef=Equipment Mode, Changeover, ModeRefType=EquipmentMode, ModeRefUUID=e1c89946-109f-493b-a133-1c6b3e07e06f, IdleModeRefType=null, IdleModeRefUUID=null, IdleModeRef=, OEERate=100.0, InfeedEquipmentRef=, InfeedEquipmentRefUUID=null, InfeedEquipmentRefType=null, InfeedScale=1.0, RejectScale=1.0, OutfeedEquipmentRef=, OutfeedEquipmentRefUUID=null, OutfeedEquipmentRefType=null, PackageCount=1.0, InfeedUnits=null, OutfeedUnits=null, RejectUnits=null, StrictTagMode=false}, u'Line 08:PQI': {EquipmentRef=Line Cell, PQI, EquipmentRefType=LineCell, EquipmentRefUUID=8dc65ca9-5bc3-42b2-9fb7-40ebbe761743, ModeRef=Equipment Mode, Changeover, ModeRefType=EquipmentMode, ModeRefUUID=e1c89946-109f-493b-a133-1c6b3e07e06f, IdleModeRefType=null, IdleModeRefUUID=null, IdleModeRef=, OEERate=100.0, InfeedEquipmentRef=, InfeedEquipmentRefUUID=null, InfeedEquipmentRefType=null, InfeedScale=1.0, RejectScale=1.0, OutfeedEquipmentRef=, OutfeedEquipmentRefUUID=null, OutfeedEquipmentRefType=null, PackageCount=1.0, InfeedUnits=null, OutfeedUnits=null, RejectUnits=null, StrictTagMode=false}}
+getParentPropertyUUID() = 
+getPropertyCollection() = None
+getPropertyPath() = ProductionSettings.Line 08
+getPropertyPathByKind() = PRODUCTION_SETTINGS.Line 08
+getPropertyPathRenaming() = ProductionSettings.Line 08
+getPropertyUUID() = 48115167-8f3f-4367-b296-7c0af900857a
+getReferenceProperties() = [EquipmentRef=Line, Line 08, ModeRef=Equipment Mode, Changeover, IdleModeRef=, InfeedEquipmentRef=Line, Line 08, OutfeedEquipmentRef=Line, Line 08]
+getRejectScale() = 1.0
+getRejectUnits() = None
+getReservedNamesLowercase() = [tagcollectortype, lotequipmentrefuuid, batchmasterparameters, segmentdependencyfactorunits, triggerresponsesegmentbegin, performancerefuuid, userid, desc_material_quantity, materialautolotcompletion, personuuid, materialfinallotstatus, kind_material_quantity_source, equipmentlothandlingmode, triggersegmentbeginrepeatmode, personsegmentref, personnelref, last_updated, lotstatus, rec_state, multioperationcapable, rec_allow, batchcontrolparentrefuuid, kind_equipment, valuedatatype, float_not_null_column, active, lotquantityunits, logicphasetype, materialcycletime, scheduledurationsec, lotbeginningquantity, kind_begin_trigger, unitshare, operationsrequestref, desc_material_status_filter, manifeststate, kind_analysis_security, string_1024_null_column, recipescale, triggersegmentendmode, materialuse, name_column, units_column, desc_lot_reference_sequence, batchupdateinterval, workorderrefuuid, sublotstatus, equipmentunits, paramdatatype, batchstatetype, productionsettings, lotquantity, analysisownerusername, recipequantity, kind_material_location_ref, analysisgroupby, kind_state_security, kind_person_ref_type, lotquantitysourcelink, kind_material_status_filter, productionoutfeedunits, productioninfeedscale, triggersegmentendauto, kind_analysis_parameter, recipeuserversion, reference_uuid_column, triggersegmentbeginprecedingrefuuid, statusuuid, operationsresponserefuuid, lotpropertystatus, triggeroperationbeginprecedingref, time_stamp_column_def, batchcontrolparameters, lotequipmentreftype, lotquantitysource, desc_sublot_status, recipebatchid, personbegindatetime, signatureref, triggersegmentendsegmentrefuuid, personlastname, desc_lot_property_status, desc_equipment_optional, schedulerefuuid, triggersegmentbegin, analysislogworkingdata, kind_material_ref_type, tag_collector_value_column, supplementalequipment, recipeexecutionstate, lotresponsesegmentref, logicstepxposition, float_null_column, segmentref, triggersegmentbegininitialdelay, productioninfeedequipmentref, string_25_not_null_column, rec_enablevariancelogging, personuse, desc_uuid, kind_person_production_selectable, rec_sortorder, equipmentforcesinglelot, personsegmentrefuuid, timeout, personusername, analysisfilterexpression, kind_batch_links, desc_equipment_mode_class_default, scheduledbegindatetime, materialrateperiod, additionalfactor, stricttagmode, personproductionselectable, segmentrecipename, equipmentmodecode, isexecuteready, scheduleref, kind_material_lot_no_source, custom, kind_person_ref_uuid, materialautogeneratelot, lotlocationrefuuid, counter, materiallotnosource, segmentreftype, rec_recipevaluerefuuid, material, artifactrefuuid, desc_material_quantity_source, materiallotstatusfilter, triggersegmentbeginprecedingreftype, personnel, batchremovecompletefromqueue, kind_batch_transitions, responsematerial, equipmentmodeclassdefault, equipmentlicense, equipmentpath, string_255_not_null_column, lotlocationref, tagpath, workorderref, recipe_root_uuid, personneluse, integer_null_column, desc_material_lot_no_link, operationsrequestrefuuid, schedulepublishdate, triggeroperationbegin, materiallotnosourcelink, segmentdependency, personnelunits, lotmaterialreftype, parameter_uuid, runningstate, analysisispublic, order, rec_value, paramkind, personenddatetime, materialequipmentreftype, kind_material_final_status, productioninfeedequipmentuuid, lotenddatetime, logicrefuuid, personnelbegindatetime, productionequipmentuuid, triggersegmentbegindefault, lotrefuuid, paramtagtype, paramvalue, logicdeststeprefuuid, lotref, lotautogenerate, kind_material_auto_complete, schedulestate, materialequipmentref, lotlotstatusfilter, templatevalid, batchremoveheldfromqueue, materialref, rec_group, batchmasterlogiclinks, paramuuid, operationreftype, triggeroperationbeginprecedingrefuuid, lotsegmentrefuuid, lotfinallotstatus, equipmentenddatetime, objecteventscript, batchphaserefuuid, desc_operation_reference_type, targetobjecttype, triggersegmentendtimeout, artifactvalue, productionoutfeedequipmentuuid, originalenddatetime, step_uuid, creator, paramsortorder, rec_tovalue, kind_material_auto_generate, lotavailabilitystatus, rec_recipevaluesecurity, desc_equipment_mode_type, batchprocesscellrefuuid, desc_material_enable_sublots, batchunitclassrefuuid, paramimmutable, personnelquantity, productionidlemodeuuid, schedulemethod, lotzerothresholdqty, workordercachedmaterialname, description_column, trackprogressby, workorderduedate, signaturerefuuid, triggersegmentend, desc_person_optional, requestref, equipmentzerolotthreshold, liveanalysiscustomperiodtag, phasetype, lotassemblytype, framingoption, materialequipmentrefuuid, ignition_user_ref_null_column, productioninfeedequipmenttype, equipment, lotdefaultquantity, standard_uuid_length, triggeroperationbegindefault, idpname, enumordinalvalue, definitionversion, triggerresponsesegmentend, equipmentsegmentrefuuid, lotallocatedquantity, scheduledenddatetime, rec_role, batchstatecommands, executeenabled, productionmoderef, equipmentquantity, batchcontrollogiclinks, materiallotdepletionwarning, batchcommandtype, operationrefuuid, desc_material_lot_no_source, materialoptional, rec_requestvaluefunction, lotsequence, lotunits, desc_operation_reference_uuid, personquantity, productionrejectunits, paramrecordingtype, lotrateperiod, manifest, triggersegmentendfixedduration, kind_material_lot_no_link, segmentrecipeuuid, triggeroperationbeginauto, personnelproductionselectable, kind_material_production_selectable, equipmentcellorder, requestdependency, kind_production_settings, parammaximumvalue, logicstepyposition, rec_setpointuuid, batchcontrollogicsteps, analysisdrilldownfilterexpression, equipmentstateoverride, desc_end_trigger_segment_mode, analysissecuritycanexecute, productionidlemodetype, rec_subproductcodemask, rec_minvalue, personpropertystatus, desc_material_final_status, desc_equipment_state_override_scope, recipename, kind_personnel, uniticonpath, requestreftype, lotrefsequence, lotuse, productionmodetype, equipmentmodeincludeinoee, paramenableexpression, licensedstate, rec_securitymode, equipmentuom, eventscriptassociation, synchronizationstrategy, triggeroperationbeginmode, productionoeerate, rec_defaultrecipevaluerefuuid, paramenumdefrefuuid, reference_type_column, counterrollover, unitmaxcapacity, desc_equipment_state_type, analysissecurity, materialunits, equipmentignitionschedule, lotmatreftype, responsereftype, string_null_column, string_max_null_column, analysissettingvalues, lotmaterialref, rec_fromvalue, triggersegmentbeginprecedingref, liveanalysisupdaterate, date_not_null_column, enddatetime, productionvisible, lotmaterialuuid, personneloptional, analysisincludedrilldownoptions, materialrefuuid, rec_recipeenable, batchmastersyncgroups, equipmentreftype, batchcommanduuid, change_note_column, counterstorerate, materialenablesublots, productionpackagecount, kind_material_rate, productionrejectscale, blob_not_null_column, timestamp, equipment_path_column, kind_segment_dependency, equipmentmodeclasssecurity, operationref, kind_material_optional, equipmentstatecode, equipmentstateoverridescope, signatureexpression, kind_end_trigger, paramvaluesource, kind_material_use, equipmentstateclasssecurity, unittransferpaths, paramfriendlyname, equipmenttype, batchmasterlogicsteps, logicsteporder, manifestlocation, responsepersonnel, control_logic_uuid, lotnosourcelink, phase_uuid, kind_supplemental_equipment, productionmodeuuid, desc_begin_trigger_mode, analysisparameter, equipmentref, equipmentmodeincludeproductioncounts, lotrate, desc_material_reference, triggerresponseoperationbegin, batchdestinationstateuuid, uuid_column, begindatetime, boolean_null_column, lotmaterialrefuuid, scriptenabled, desc_material_use, kind_mode_security, kind_person_use, equipmentdowntimedetectionmode, equipmentproductionselectable, availabilitystate, lotmatref, unitmincapacity, desc_material_auto_generate, analysisorderby, productionequipmenttype, updateeventinterval, lotbegindatetime, triggersegmentendcustomref, responseref, recipepriority, personoptional, desc_material_quantity_link, kind_material_quantity, long_not_null_column, kind_batch_steps, operationsegmentref, lotenablesublots, name, lotuom, responseproductionsettings, materialquantity, batchcontrolsyncgroups, string_255_null_column, triggersegmentbegincustomref, materialreftype, workordercloseddate, tagcollector, paramminimumvalue, boolean_not_null_column, description, desc_running_state, liveanalysisperiod, rec_activerecipeuuid, triggeroperationbeginprecedingreftype, lotdepletionseconds, workorderquantity, notfound, performanceref, equipmentstateclassuuid, rec_subrecipename, kind_person_optional, productionoutfeedequipmenttype, lotcycletime, batchstatetransitions, counterkind, scriptuuid, equipmentsegmentref, rec_evaluatevariancescriptrefuuid, unittransferdestuuid, personunits, uuid_long_column, rec_type, operationsegmentrefuuid, artifactversioned, batchsourcestateuuid, scheduletype, personnelenddatetime, personreftype, kind_request_dependency, desc_lot_availability_status, phaseexpose, materialquantitysourcelink, enumoptions, desc_material_rate_period, required, kind_material_ref, kind_material_location_ref_uuid, kind_material_cycle_time, artifact, lotoptional, lotnosource, desc_material_optional, equipmentmodeclassuuid, countergroup, rec_units, last_updated_column_def, old_lot_name, equipmentbegindatetime, responsesegmentdependency, equipmentstatetype, rec_format, personnelrefuuid, responsedependency, workorderactualquantity, personignitionrefcomplex, equipmentpropertystatus, kind_material_ref_uuid, equipmentmincellsrunningthreshold, lotmessagetype, paramunits, ignition_user_ref_column, equipmentrefuuid, rec_evaluatevariancefunction, paramparentuuid, batchunitphases, force, paramenumdefref, rec_requestvaluescriptrefuuid, equipmentstateshortstopthreshold, responsesupplementalequipment, liveanalysis, equipmentactivetype, rec_recipevalue, materialquantitysource, workorderclosed, originalbegindatetime, rec_recipescale, derivedfromref, recipevalid, enabled, enableupdateevent, desc_material_auto_complete, materialproductionselectable, personignitionref, logicsourcesteprefuuid, kind_person_quantity, paramcalculation, integer_not_null_column, kind_material_units, analysisdatapoints, equipmentoptional, equipmentrefpath, rec_datatype, date_null_column, operationsresponseref, logictype, batchunitrefuuid, lotlocationreftype, productionequipmentref, equipmentstatus, batchmasterrefuuid, equipmentmodetype, unitxposition, productionoutfeedequipmentref, batchstates, segmentrefuuid, triggersegmentbeginrepeatinterval, rec_inheritrecipevaluesmode, kind_material_rate_period, materialrate, operationsegmentreftype, analysisenddateparametername, kind_material_enable_sublots, derivedfromreftype, lotproductionselectable, rec_highvariancethreshold, kind_person_ref, schedulecategory, valueid, recipestate, segmentdependencytype, requestrefuuid, batchphaseparameters, kind_material_location_ref_type, uuid, kind_batch_sync_groups, string_25_null_column, responseequipment, recipelogicrefuuid, lotmatrefuuid, productionidlemoderef, scheduleproductioncount, personnelreftype, analysisparameterdatatype, logicparentlogicrefuuid, segmentdependencyfactor, triggersegmentendsegmentref, responserefuuid, analysisstartdateparametername, format, unityposition, desc_begin_trigger_segment_mode, kind_batch_params, equipmentstateclassdefault, rec_lowvariancethreshold, lotdepletionwarning, workorderremainingquantity, rec_defaultrecipevalue, countmode, productioninfeedunits, equipmentenablemeantimemetrics, equipmentoverridecurrentlinedowntime, personrefuuid, lotsegmentref, kind_material, kind_person_units, desc_equipment_state_override, personref, nil_uuid, triggersegmentbeginmode, lotmanuallotno, triggersegmentbeginauto, workorderscheduledquantity, unitremoteenable, personfirstname, reference_long_uuid_column, endoperationwhencomplete, analysissecuritycanmodify, lotresponsesegmentuuid, name_column_short, lotautolotcompletion, equipmentzerolotthresholdmethod, rec_category, string_not_null_column, rec_maxvalue, equipmentuse, desc_lotsequence, rec_trackinguuid, kind_material_auto_complete_warn, rec_enablescaling, rec_setpointvalue, lotequipmentref, kind_material_quantity_link, tagkey, derivedfromrefuuid, desc_equipment_state_class_default]
+getStatus() = 
+getTableName() = MESProductionSettingsProperty
+getTextualDescriptions() = [Equipment Line 08 of type Line will be assigned the Changeover mode during production.]
+getUse() = None
+getValidationForProductionMessages() = []
+getValidationPattern() = PROPERTY
+getValidationSize() = 255
+getValue() = Line, Line 08
+getValueChangeTimeStamp() = Wed Oct 29 11:10:23 EDT 2025
+
+
+========== CHECKING OPERATION DEFINITION ==========
+
+--- All Available Methods on OperationsDefinition ---
+  getAdditionalTaskList
+  getAllArtifactNames
+  getAllCustomProperties
+  getAllCustomPropeties
+  getAllReferenceProperties
+  getAllowedChildTypes
+  getAllowedParentTypes
+  getAndClearNotificationMessage
+  getArtifactCount
+  getArtifactNames
+  getArtifactProperties
+  getArtifactProperty
+  getArtifactValueByName
+  getArtifactValueByUUID
+  getAssociatedEquipmentPathsForMESObject
+  getChildCollection
+  getChildCollectionIncludingRemoved
+  getClass
+  getComplexProperty
+  getComplexPropertyByKind
+  getComplexPropertyByUUID
+  getComplexPropertyCollection
+  getComplexPropertyCount
+  getComplexPropertyItemNames
+  getComplexPropertyTypeDisplayNames
+  getComplexPropertyTypeMatchedNames
+  getComplexPropertyTypeNames
+  getComplexPropertyTypeNamesWithEnableReferenceSync
+  getComplexPropertyTypes
+  getCoreProperties
+  getCoreProperty
+  getCorePropertyValue
+  getCreatorType
+  getCustomProperties
+  getCustomPropertiesFull
+  getCustomPropertyDescription
+  getCustomPropertyEnabled
+  getCustomPropertyUnits
+  getCustomPropertyValueMap
+  getCustomPropertyValues
+  getDBIndexForColumn
+  getDBIndexList
+  getDependencyPropagatableProperties
+  getDerivedFromRefType
+  getDerivedFromRefUUID
+  getDescription
+  getEventList
+  getExceptionLog
+  getExtendedBaseNameList
+  getInheritedProperties
+  getLastUpdated
+  getLinksToRelatedObjects
+  getMESObjectType
+  getMESObjectTypeName
+  getModifiedMESProperties
+  getName
+  getNewEventName
+  getOperationBeginTriggers
+  getOrCreateComplexProperty
+  getParentCollection
+  getParentCollectionIncludingRemoved
+  getPathsToDispatch
+  getPendingChanges
+  getPendingSets
+  getPreviousCorePropertyValue
+  getPrimaryBeginTrigger
+  getPrimaryParentLink
+  getProperty
+  getPropertyCollection
+  getPropertyValue
+  getReadLock
+  getReadLockHoldCount
+  getReferenceComplexPropertyTypeNames
+  getReferenceProperties
+  getRemovedChildMESObjects
+  getRemovedMESObjects
+  getRemovedParentMESObjects
+  getRemovedProperties
+  getSegmentCount
+  getSegmentDependencies
+  getSegmentDependencyProperties
+  getSegmentDependencyProperty
+  getSynchronizationStrategy
+  getTextualDescriptions
+  getTrackChangesMode
+  getTrackProgressBy
+  getUUID
+  getUUIDProperty
+  getUpdateEventInterval
+  getValidationForProductionMessages
+  getVersion
+  getVersionList
+  getWriteLock
+  setArtifactValue
+  setCorePropertyData
+  setCorePropertyValue
+  setCreatorType
+  setCustomPropertyDescription
+  setCustomPropertyEnabled
+  setCustomPropertyUnits
+  setCustomPropertyValueMap
+  setCustomPropertyValues
+  setDerivedFromRefType
+  setDerivedFromRefUUID
+  setDescription
+  setEnableUpdateEvent
+  setEnabled
+  setFaulted
+  setForceReload
+  setInitializing
+  setLastUpdated
+  setLazyLoadedPropertyCollection
+  setModified
+  setName
+  setOldVersion
+  setPendingChangeLog
+  setProductionVisible
+  setPropertyValue
+  setTrackProgressBy
+  setUUID
+  setUpdateEventInterval
+  setValidName
+  setVersion
+
+--- Trying OperationsDef getters ---
+getAllArtifactNames() = []
+getAllCustomProperties() = []
+getAllCustomPropeties() = []
+getAllReferenceProperties() = [SegmentRef=Operations Segment, 2019 ProV1-Acushnet:Ball Plant 03:OPP:Line 08_CO, SegmentRef=Operations Segment, 2019 ProV1-Acushnet:Ball Plant 03:OPP:Line 08]
+getAllowedChildTypes() = [Operations Definition]
+getAllowedParentTypes() = [Operations Definition]
+getArtifactCount() = 0
+getArtifactNames() = []
+getArtifactProperties() = {}
+getChildCollection() = {}
+getChildCollectionIncludingRemoved() = []
+getComplexPropertyTypeDisplayNames() = [Artifact, Segment Dependency, Trigger Operation Begin]
+getComplexPropertyTypeMatchedNames() = [[Ljava.lang.String;@2494e186, [Ljava.lang.String;@3775ee68, [Ljava.lang.String;@33fe0276]
+getComplexPropertyTypeNames() = [Artifact, SegmentDependency, TriggerOperBegin]
+getComplexPropertyTypeNamesWithEnableReferenceSync() = [SegmentDependency]
+getComplexPropertyTypes() = [com.sepasoft.production.common.model.mesobject.core.MESPropertyID@5ffcd26a, com.sepasoft.production.common.model.mesobject.core.MESPropertyID@923fa9ad, com.sepasoft.production.common.model.mesobject.core.MESPropertyID@424ecb3e]
+getCoreProperties() = {u'UUID': UUID=8e9eaa32-864f-4f63-8023-adbbe1714596, u'Name': Name=2019 ProV1-Acushnet:Ball Plant 03:OPP:Line 08, u'Description': Description=, u'Enabled': Enabled=true, u'Creator': Creator=OEE, u'ProductionVisible': ProductionVisible=true, u'EnableUpdateEvent': EnableUpdateEvent=true, u'UpdateEventInterval': UpdateEventInterval=60, u'TrackProgressBy': TrackProgressBy=Material Out, u'IsExecuteReady': IsExecuteReady=true}
+getCreatorType() = OEE
+getCustomProperties() = {}
+getCustomPropertiesFull() = {}
+getCustomPropertyValueMap() = {}
+getCustomPropertyValues() = {}
+getDBIndexList() = [IX_Name:Name]
+getDependencyPropagatableProperties() = com.sepasoft.production.common.model.mesobject.core.ModifiedMESProperties@487132ba
+getDerivedFromRefType() = Unknown
+getEventList() = [com.sepasoft.production.common.model.mesobject.core.MESObjectEventDefinition@578f110f]
+getExceptionLog() = org.apache.log4j.Logger@722e6651
+getInheritedProperties() = {}
+getLastUpdated() = 2024-12-30 14:02:39.0
+getLinksToRelatedObjects() = [(type: Operations Segment,  uuid: 6f72d11d-3bf1-4c1f-84c3-3985ec21cd94), (type: Operations Segment,  uuid: cd849f7e-7ab8-4499-aac3-de0a46937765)]
+getMESObjectType() = Operations Definition
+getMESObjectTypeName() = OperationsDefinition
+getName() = 2019 ProV1-Acushnet:Ball Plant 03:OPP:Line 08
+getNewEventName() = OperationsDefinition - New
+getOperationBeginTriggers() = []
+getParentCollection() = {}
+getParentCollectionIncludingRemoved() = []
+getPendingChanges() = []
+getPendingSets() = []
+getReadLock() = java.util.concurrent.locks.ReentrantReadWriteLock$ReadLock@2ed2ac56[Read locks = 0]
+getReadLockHoldCount() = 0
+getReferenceComplexPropertyTypeNames() = [SegmentDependency, TriggerOperBegin]
+getReferenceProperties() = []
+getRemovedChildMESObjects() = []
+getRemovedMESObjects() = []
+getRemovedParentMESObjects() = []
+getRemovedProperties() = []
+getSegmentCount() = 2
+getSegmentDependencies() = [(type: Operations Segment,  uuid: 6f72d11d-3bf1-4c1f-84c3-3985ec21cd94, version Oct 29, 2025 11:10:23.085 AM - 0), (type: Operations Segment,  uuid: cd849f7e-7ab8-4499-aac3-de0a46937765, version Oct 29, 2025 11:10:23.085 AM - 0)]
+getSegmentDependencyProperties() = [{SegmentRef=Operations Segment, 2019 ProV1-Acushnet:Ball Plant 03:OPP:Line 08_CO, SegmentRefUUID=6f72d11d-3bf1-4c1f-84c3-3985ec21cd94, SegmentRefType=OperationsSegment, SegmentDependencyType=null, SegmentDependencyFactor=null, SegmentDependencyFactorUnits=null}, {SegmentRef=Operations Segment, 2019 ProV1-Acushnet:Ball Plant 03:OPP:Line 08, SegmentRefUUID=cd849f7e-7ab8-4499-aac3-de0a46937765, SegmentRefType=OperationsSegment, SegmentDependencyType=null, SegmentDependencyFactor=null, SegmentDependencyFactorUnits=null}]
+getSynchronizationStrategy() = PARENT_AND_CHILDREN
+getTextualDescriptions() = [Operation Definition (2019 ProV1-Acushnet:Ball Plant 03:OPP:Line 08)., Production will be tracked by the (Material Out) material in the (2019 ProV1-Acushnet:Ball Plant 03:OPP:Line 08) segment.]
+getTrackChangesMode() = ALL
+getTrackProgressBy() = Material Out
+getUUID() = 8e9eaa32-864f-4f63-8023-adbbe1714596
+getUUIDProperty() = UUID=8e9eaa32-864f-4f63-8023-adbbe1714596
+getUpdateEventInterval() = 60
+getValidationForProductionMessages() = []
+getVersion() = Oct 29, 2025 11:10:23.085 AM - 0
+getVersionList() = [Dec 30, 2024 02:02:39.980 PM - 0, Dec 30, 2024 01:59:05.503 PM - 0, Dec 19, 2024 11:00:27.203 AM - 0]
+getWriteLock() = java.util.concurrent.locks.ReentrantReadWriteLock$WriteLock@11a7d5ed[Unlocked]
+>>> 
