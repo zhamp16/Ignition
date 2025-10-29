@@ -39,7 +39,24 @@ print ""
 # Step 1: Get all materials in the folder
 print "Step 1: Getting materials from folder '%s'..." % MATERIAL_FOLDER
 materials = getMaterialsInFolder(MATERIAL_FOLDER)
-print "  Found: %s" % ', '.join(materials)
+
+# If folder browsing doesn't work, uncomment and manually provide material names:
+# materials = [
+#     '2019 ProV1',
+#     '2020 ProV1',
+#     '2021 ProV1',
+#     # Add more materials here...
+# ]
+
+if len(materials) > 0:
+    print "  Found: %s" % ', '.join(materials)
+else:
+    print "  ERROR: No materials found!"
+    print "  Please run exploreMaterials.py to diagnose, or provide material names manually"
+    # Exit early if no materials
+    import sys
+    sys.exit(1)
+
 print ""
 
 # Step 2: Get all lines in the target area

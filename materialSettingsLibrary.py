@@ -359,7 +359,7 @@ def getMaterialsInFolder(folderPath):
 
     Args:
         folderPath (str): Name of the material folder (e.g., 'Golfballs')
-                         Can also be a path like 'Material Root\\Golfballs'
+                         The folder must exist as a MaterialDef object in Sepasoft.
 
     Returns:
         list: List of material names in the folder
@@ -367,31 +367,60 @@ def getMaterialsInFolder(folderPath):
     Example:
         materials = getMaterialsInFolder('Golfballs')
         print materials  # ['2019 ProV1', '2020 ProV1', ...]
+
+    Alternative: If folder browsing doesn't work, provide material names directly:
+        materials = ['2019 ProV1', '2020 ProV1', '2021 ProV1']
     """
 
     try:
         # Try to load the folder as a MaterialDef object
-        # First try as-is, then try with Material Root prefix
-        folder = None
-        pathsToTry = [folderPath]
+        print "Attempting to load material folder: " + folderPath
 
-        # If not already prefixed, try with Material Root prefix
-        if not folderPath.startswith('Material Root'):
-            pathsToTry.append('Material Root\\' + folderPath)
-            pathsToTry.append('Material Root/' + folderPath)
+        # Try different path formats
+        pathsToTry = [
+            folderPath,
+            'Material Root\\' + folderPath,
+            'Material Root/' + folderPath
+        ]
+
+        folder = None
+        successPath = None
 
         for path in pathsToTry:
             try:
                 folderLink = system.mes.getMESObjectLinkByName('MaterialDef', path)
                 if folderLink:
                     folder = system.mes.loadMESObject(folderLink.getMESObjectUUID())
-                    print "Loaded folder: " + path
+                    successPath = path
                     break
             except:
                 continue
 
         if not folder:
-            raise Exception("Could not find material folder '%s'" % folderPath)
+            print "=" * 80
+            print "ERROR: Could not find material folder '%s'" % folderPath
+            print "=" * 80
+            print ""
+            print "Tried the following paths:"
+            for path in pathsToTry:
+                print "  - " + path
+            print ""
+            print "ALTERNATIVE APPROACHES:"
+            print ""
+            print "1. Run exploreMaterials.py to find the correct folder name"
+            print ""
+            print "2. Provide material names directly instead of using folder:"
+            print "   materials = ['2019 ProV1', '2020 ProV1', '2021 ProV1']"
+            print "   result = copyLineMaterialSettings(sourcePath, targetPaths, materials)"
+            print ""
+            print "3. Query materials from database (if you have database access):"
+            print "   query = \"SELECT Name FROM MESMaterialDefProperty WHERE Enabled = 1\""
+            print "   materials = [row['Name'] for row in system.db.runQuery(query)]"
+            print ""
+            print "=" * 80
+            return []
+
+        print "Successfully loaded folder: " + successPath
 
         # Get child materials
         children = folder.getChildCollection()
@@ -402,12 +431,19 @@ def getMaterialsInFolder(folderPath):
             materialNames.append(materialName)
 
         print "Found %d materials in folder '%s'" % (len(materialNames), folderPath)
+        if len(materialNames) > 0:
+            print "  First few materials: " + ', '.join(materialNames[:5])
+            if len(materialNames) > 5:
+                print "  ... and %d more" % (len(materialNames) - 5)
+
         return materialNames
 
     except Exception as e:
         print "Error getting materials from folder '%s': %s" % (folderPath, str(e))
         import traceback
         traceback.print_exc()
+        print ""
+        print "TIP: Try running exploreMaterials.py to diagnose the issue"
         return []
 
 
