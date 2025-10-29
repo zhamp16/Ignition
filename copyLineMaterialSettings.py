@@ -1,20 +1,20 @@
 materialName = '2019 ProV1'
 
-sourceLinePath = 'Acushnet\Ball Plant 03\OPP\Line 08'
-targetLinePath = 'Acushnet\Ball Plant 03\ASB\ASB_02'
+sourceLinePath = 'Acushnet\\Ball Plant 03\\OPP\\Line 08'
+targetLinePath = 'Acushnet\\Ball Plant 03\\ASB\\ASB_02'
 
 # Step 1: Load the material definition
 matLink = system.mes.getMESObjectLinkByName('MaterialDef', materialName)
 
 # Step 2: Load the existing operation for the source line
-sourceOpName = materialName + '-' + sourceLinePath.replace('\', ':')
+sourceOpName = materialName + '-' + sourceLinePath.replace('\\', ':')
 
 # Step 3: Get settings from source
 settings = {}
 changeoverSettings = {}
 
 # Extract target equipment name from path
-targetEquipmentName = targetLinePath.split('\')[-1]
+targetEquipmentName = targetLinePath.split('\\')[-1]
 print "Target equipment name: " + targetEquipmentName
 
 try:
@@ -36,6 +36,7 @@ try:
     endTriggers = sourceChangeoverSeg.getSegmentEndTriggers()
     if len(endTriggers) > 0:
         endTrigger = endTriggers[0]
+        endTrigger
         changeoverSettings['fixedDuration'] = endTrigger.getFixedDuration()
         changeoverSettings['mode'] = endTrigger.getMode()
         changeoverSettings['timeout'] = endTrigger.getTimeout()
