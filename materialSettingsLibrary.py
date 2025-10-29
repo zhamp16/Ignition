@@ -358,7 +358,8 @@ def getMaterialsInFolder(folderPath):
     Get all material names in a given material folder.
 
     Args:
-        folderPath (str): Path to the material folder (e.g., 'Golfballs')
+        folderPath (str): Name of the material folder (e.g., 'Golfballs')
+                         Can also be a path like 'Material Root\\Golfballs'
 
     Returns:
         list: List of material names in the folder
@@ -369,22 +370,36 @@ def getMaterialsInFolder(folderPath):
     """
 
     try:
-        # Browse the material hierarchy to find the folder
-        # This assumes the folder is at the root level of materials
-        materialLinks = system.mes.browseMESObjects('MaterialDef', folderPath + '*')
+        # Try to load the folder as a MaterialDef object
+        # First try as-is, then try with Material Root prefix
+        folder = None
+        pathsToTry = [folderPath]
+
+        # If not already prefixed, try with Material Root prefix
+        if not folderPath.startswith('Material Root'):
+            pathsToTry.append('Material Root\\' + folderPath)
+            pathsToTry.append('Material Root/' + folderPath)
+
+        for path in pathsToTry:
+            try:
+                folderLink = system.mes.getMESObjectLinkByName('MaterialDef', path)
+                if folderLink:
+                    folder = system.mes.loadMESObject(folderLink.getMESObjectUUID())
+                    print "Loaded folder: " + path
+                    break
+            except:
+                continue
+
+        if not folder:
+            raise Exception("Could not find material folder '%s'" % folderPath)
+
+        # Get child materials
+        children = folder.getChildCollection()
 
         materialNames = []
-        for link in materialLinks:
-            # Get the material name from the link
-            materialName = link.getMESObjectName()
-            # Only include materials that are directly in this folder
-            if materialName.startswith(folderPath):
-                # Extract just the material name without the folder path
-                nameParts = materialName.split('/')
-                if len(nameParts) > 1:
-                    materialNames.append(nameParts[-1])
-                else:
-                    materialNames.append(materialName)
+        for childKey, childMat in children.items():
+            materialName = childMat.getName()
+            materialNames.append(materialName)
 
         print "Found %d materials in folder '%s'" % (len(materialNames), folderPath)
         return materialNames
@@ -423,12 +438,17 @@ def getLinesInArea(areaPath):
         children = areaEquipment.getChildCollection()
 
         linePaths = []
-        for childName, childEquip in children.items():
-            # Get the equipment path for this child
+        for childKey, childEquip in children.items():
+            # The key in getChildCollection() is a UUID, not the name
+            # We need to get the name from the child equipment object
+            childName = childEquip.getName()
+
+            # Construct the full equipment path for this child
             childPath = areaPath + '\\' + childName
             linePaths.append(childPath)
 
         print "Found %d lines in area '%s'" % (len(linePaths), areaPath)
+        print "  Lines: %s" % ', '.join([path.split('\\')[-1] for path in linePaths])
         return linePaths
 
     except Exception as e:
