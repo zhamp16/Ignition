@@ -1,22 +1,23 @@
 """
 Ignition Script: Recursively Import DeltaV OPC Tags with Mirrored Folder Structure
-Version 2.0 - Timeout Optimized
+Version 2.1 - Iterative Browsing with Queue
 
 Description:
-    This script recursively browses an OPC UA server starting from a base path,
-    searches for specific tag names (e.g., "CV", "PV"), and creates a mirrored
-    folder structure in Ignition's tag browser with OPC tags pointing to the
-    found items.
+    This script uses system.opc.browseServer() with iterative (non-recursive) browsing
+    to find tags matching search criteria. This prevents timeout issues by doing
+    multiple small browse operations instead of one large recursive operation.
 
-    V2.0 Changes:
-    - Added timeout handling and retry logic
-    - Progress updates to keep connection alive
-    - Chunked tag creation to prevent timeouts
-    - Better error recovery
+    V2.1 Changes:
+    - Changed from system.opc.browse() to system.opc.browseServer()
+    - Replaced recursion with iterative queue-based browsing
+    - Added dry-run mode to print tag paths without creating them
+    - Better handling of OPC UA node IDs
 
 Usage:
     1. Update the configuration parameters in the main() function
-    2. Run this script from Ignition's Script Console or as a Gateway script
+    2. Set DRY_RUN = True to test and see what would be created
+    3. Set DRY_RUN = False to actually create the tags
+    4. Run this script from Ignition's Script Console
 
 Author: Claude AI
 Date: 2025-11-05
@@ -24,127 +25,183 @@ Date: 2025-11-05
 
 import time
 
-def browse_opc_recursive(opc_server, opc_path, search_tag_name=None, max_depth=50, current_depth=0, progress_callback=None):
+
+def browse_opc_iterative(opc_server, base_node_id, search_tag_name=None, max_iterations=1000):
     """
-    Recursively browse OPC server and find tags matching search criteria.
+    Iteratively browse OPC server using a queue to avoid recursion timeouts.
 
     Args:
         opc_server (str): Name of the OPC connection in Ignition
-        opc_path (str): Current OPC path to browse
+        base_node_id (str): Starting OPC node ID (e.g., 'nsu=http://...;s=/path')
         search_tag_name (str): Tag name to search for (e.g., "CV", "PV"). If None, returns all tags.
-        max_depth (int): Maximum recursion depth to prevent infinite loops
-        current_depth (int): Current recursion depth
-        progress_callback (function): Optional callback function for progress updates
+        max_iterations (int): Maximum number of browse operations to prevent infinite loops
 
     Returns:
         list: List of dictionaries containing tag information
-              Format: [{'opc_path': 'full/path/to/tag', 'relative_path': 'relative/path', 'tag_name': 'CV'}]
+              Format: [{'node_id': 'full_node_id', 'display_name': 'CV', 'relative_path': 'BRX-AI-001/PV/CV'}]
     """
     found_tags = []
 
-    # Safety check for recursion depth
-    if current_depth >= max_depth:
-        print("Warning: Maximum recursion depth reached at path: " + opc_path)
-        return found_tags
+    # Queue of nodes to browse - each item is (node_id, relative_path)
+    browse_queue = [(base_node_id, '')]
 
-    try:
-        # Progress update to keep connection alive
-        if progress_callback:
-            progress_callback("Browsing: " + opc_path)
+    # Track visited nodes to avoid infinite loops
+    visited = set()
+    visited.add(base_node_id)
 
-        # Browse the current OPC path with retry logic
-        browse_results = None
-        max_retries = 3
-        retry_delay = 2  # seconds
+    iteration_count = 0
+    total_items_found = 0
 
-        for attempt in range(max_retries):
-            try:
-                browse_results = system.opc.browse(opc_server, opc_path)
-                break  # Success, exit retry loop
-            except Exception as browse_error:
-                if attempt < max_retries - 1:
-                    print("Browse attempt " + str(attempt + 1) + " failed, retrying in " + str(retry_delay) + "s: " + str(browse_error))
-                    time.sleep(retry_delay)
+    print("Starting iterative OPC browsing...")
+    print("Base Node: " + base_node_id)
+    print("=" * 80)
+
+    while browse_queue and iteration_count < max_iterations:
+        iteration_count += 1
+
+        # Get next node to browse
+        current_node_id, current_relative_path = browse_queue.pop(0)
+
+        # Progress update every 10 iterations
+        if iteration_count % 10 == 0:
+            print("[Iteration " + str(iteration_count) + "] Queue size: " + str(len(browse_queue)) +
+                  ", Tags found: " + str(len(found_tags)))
+
+        try:
+            # Browse the current node
+            items = system.opc.browseServer(opc_server, current_node_id)
+
+            if items is None:
+                continue
+
+            total_items_found += len(items)
+
+            # Process each item
+            for item in items:
+                display_name = item.getDisplayName()
+
+                # Skip the #Properties folder that appears in OPC UA
+                if display_name == '#Properties':
+                    continue
+
+                # Get the node ID for this item
+                item_node_id = item.getNodeId()
+
+                # Build the relative path
+                if current_relative_path:
+                    item_relative_path = current_relative_path + '/' + display_name
                 else:
-                    print("Browse failed after " + str(max_retries) + " attempts: " + opc_path)
-                    raise browse_error
+                    item_relative_path = display_name
 
-        if browse_results is None:
-            print("Warning: No browse results for path: " + opc_path)
-            return found_tags
+                # Check if this is a folder (Object) or a variable
+                # We need to determine this by trying to browse into it
+                # or checking the node class
+                node_class = item.getNodeClass()
 
-        # Process each item in the browse results
-        item_count = 0
-        for result in browse_results:
-            item_count += 1
+                # NodeClass values:
+                # 1 = Object (folder)
+                # 2 = Variable (tag)
+                if node_class.getValue() == 1:  # Object/Folder
+                    # Add to browse queue if we haven't visited it
+                    if item_node_id not in visited:
+                        browse_queue.append((item_node_id, item_relative_path))
+                        visited.add(item_node_id)
 
-            # Progress update every 10 items
-            if item_count % 10 == 0 and progress_callback:
-                progress_callback("Browsed " + str(item_count) + " items in " + opc_path)
+                elif node_class.getValue() == 2:  # Variable/Tag
+                    # Check if this matches our search criteria
+                    if search_tag_name is None or display_name == search_tag_name:
+                        found_tags.append({
+                            'node_id': item_node_id,
+                            'display_name': display_name,
+                            'relative_path': item_relative_path
+                        })
 
-            item_name = result.getDisplayName()
-            item_type = result.getNodeClass()
+        except Exception as e:
+            print("Error browsing node '" + str(current_node_id) + "': " + str(e))
+            # Continue with next item in queue
+            continue
 
-            # Build the full path for this item
-            if opc_path.endswith('/'):
-                full_path = opc_path + item_name
-            else:
-                full_path = opc_path + '/' + item_name
+    if iteration_count >= max_iterations:
+        print("\nWARNING: Reached maximum iteration limit (" + str(max_iterations) + ")")
 
-            # Check if this is a folder/object (NodeClass = 1 for Object)
-            # or a variable (NodeClass = 2 for Variable)
-            if item_type.getValue() == 1:  # Object/Folder
-                # Recursively browse into this folder
-                found_tags.extend(
-                    browse_opc_recursive(
-                        opc_server,
-                        full_path,
-                        search_tag_name,
-                        max_depth,
-                        current_depth + 1,
-                        progress_callback
-                    )
-                )
-            elif item_type.getValue() == 2:  # Variable/Tag
-                # Check if this tag matches our search criteria
-                if search_tag_name is None or item_name == search_tag_name:
-                    found_tags.append({
-                        'opc_path': full_path,
-                        'tag_name': item_name,
-                        'item_type': item_type.getValue()
-                    })
-
-    except Exception as e:
-        print("Error browsing OPC path '" + opc_path + "': " + str(e))
-        import traceback
-        traceback.print_exc()
+    print("\n" + "=" * 80)
+    print("Browse complete!")
+    print("Iterations: " + str(iteration_count))
+    print("Total items browsed: " + str(total_items_found))
+    print("Tags found matching criteria: " + str(len(found_tags)))
+    print("=" * 80 + "\n")
 
     return found_tags
 
 
-def get_relative_path(full_opc_path, base_opc_path):
+def print_tag_paths(found_tags, root_folder, tag_provider='default'):
     """
-    Extract the relative path from a full OPC path given a base path.
+    Print the Ignition tag paths that would be created.
 
     Args:
-        full_opc_path (str): Full OPC path to the tag
-        base_opc_path (str): Base OPC path to remove
-
-    Returns:
-        str: Relative path from base to the tag
+        found_tags (list): List of tag information dictionaries
+        root_folder (str): Root folder name in Ignition
+        tag_provider (str): Tag provider name
     """
-    # Normalize paths by removing trailing slashes
-    base = base_opc_path.rstrip('/')
-    full = full_opc_path.rstrip('/')
+    print("\n" + "=" * 80)
+    print("TAG PATHS THAT WOULD BE CREATED:")
+    print("=" * 80)
 
-    if full.startswith(base):
-        relative = full[len(base):]
-        # Remove leading slash
-        relative = relative.lstrip('/')
-        return relative
-    else:
-        # If the full path doesn't start with base, return the full path
-        return full
+    if len(found_tags) == 0:
+        print("No tags found!")
+        return
+
+    # Group tags by folder for better readability
+    folder_structure = {}
+
+    for tag_info in found_tags:
+        relative_path = tag_info['relative_path']
+        display_name = tag_info['display_name']
+
+        # Split path into folder and tag name
+        path_parts = relative_path.split('/')
+
+        # The folder path is everything except the last part
+        if len(path_parts) > 1:
+            folder_path = '/'.join(path_parts[:-1])
+        else:
+            folder_path = ''
+
+        # Build full Ignition path
+        if folder_path:
+            ignition_path = '[' + tag_provider + ']' + root_folder + '/' + folder_path + '/' + display_name
+        else:
+            ignition_path = '[' + tag_provider + ']' + root_folder + '/' + display_name
+
+        # Store in folder structure
+        if folder_path not in folder_structure:
+            folder_structure[folder_path] = []
+        folder_structure[folder_path].append({
+            'ignition_path': ignition_path,
+            'opc_node_id': tag_info['node_id'],
+            'display_name': display_name
+        })
+
+    # Print organized by folder
+    folder_count = 0
+    tag_count = 0
+
+    for folder_path in sorted(folder_structure.keys()):
+        folder_count += 1
+        folder_display = folder_path if folder_path else '(root)'
+
+        print("\n--- Folder: " + root_folder + "/" + folder_display + " ---")
+
+        for tag in folder_structure[folder_path]:
+            tag_count += 1
+            print("  [" + str(tag_count) + "] " + tag['ignition_path'])
+            print("      OPC: " + str(tag['opc_node_id']))
+
+    print("\n" + "=" * 80)
+    print("SUMMARY:")
+    print("  Folders: " + str(folder_count))
+    print("  Tags: " + str(tag_count))
+    print("=" * 80)
 
 
 def create_folder_structure(tag_provider, parent_path, folder_name):
@@ -197,7 +254,7 @@ def create_folder_structure(tag_provider, parent_path, folder_name):
     return folder_path
 
 
-def create_opc_tag(tag_provider, tag_path, tag_name, opc_server, opc_item_path, data_type='Float8'):
+def create_opc_tag(tag_provider, tag_path, tag_name, opc_server, opc_node_id, data_type='Float8'):
     """
     Create an OPC tag in Ignition.
 
@@ -206,7 +263,7 @@ def create_opc_tag(tag_provider, tag_path, tag_name, opc_server, opc_item_path, 
         tag_path (str): Parent path where to create the tag
         tag_name (str): Name of the tag
         opc_server (str): OPC server connection name
-        opc_item_path (str): Full OPC item path
+        opc_node_id (str): OPC UA node ID
         data_type (str): Data type for the tag (default: Float8)
 
     Returns:
@@ -229,13 +286,13 @@ def create_opc_tag(tag_provider, tag_path, tag_name, opc_server, opc_item_path, 
         print("Tag already exists, skipping: " + full_tag_path)
         return True
 
-    # Create OPC tag configuration
+    # Create OPC tag configuration using node ID
     tag_config = {
         'name': tag_name,
         'tagType': 'AtomicTag',
         'dataType': data_type,
         'opcServer': opc_server,
-        'opcItemPath': opc_item_path,
+        'opcItemPath': str(opc_node_id),  # Use node ID instead of path
         'enabled': True,
         'valueSource': 'opc'
     }
@@ -243,7 +300,7 @@ def create_opc_tag(tag_provider, tag_path, tag_name, opc_server, opc_item_path, 
     try:
         # Create the tag
         system.tag.configure(parent_path, [tag_config], 'o')
-        print("Created OPC tag: " + full_tag_path + " -> " + opc_item_path)
+        print("Created OPC tag: " + full_tag_path)
         return True
     except Exception as e:
         print("Error creating tag '" + full_tag_path + "': " + str(e))
@@ -252,127 +309,49 @@ def create_opc_tag(tag_provider, tag_path, tag_name, opc_server, opc_item_path, 
         return False
 
 
-def create_tags_in_chunks(tag_configs, chunk_size=50):
+def create_tags_from_list(found_tags, opc_server, tag_provider, root_folder, data_type='Float8', chunk_size=50):
     """
-    Create multiple tags in chunks to prevent timeouts.
+    Create Ignition tags from the found tags list.
 
     Args:
-        tag_configs (list): List of tag configuration dictionaries
+        found_tags (list): List of tag information dictionaries
+        opc_server (str): OPC server connection name
+        tag_provider (str): Tag provider name
+        root_folder (str): Root folder in Ignition
+        data_type (str): Data type for tags
         chunk_size (int): Number of tags to create at once
 
     Returns:
-        int: Number of successfully created tags
+        dict: Summary of creation operation
     """
-    total_created = 0
-    total_tags = len(tag_configs)
-
-    for i in range(0, total_tags, chunk_size):
-        chunk = tag_configs[i:i + chunk_size]
-        chunk_end = min(i + chunk_size, total_tags)
-
-        print("Creating tags " + str(i + 1) + " to " + str(chunk_end) + " of " + str(total_tags))
-
-        for config in chunk:
-            try:
-                success = create_opc_tag(
-                    config['tag_provider'],
-                    config['tag_path'],
-                    config['tag_name'],
-                    config['opc_server'],
-                    config['opc_item_path'],
-                    config['data_type']
-                )
-                if success:
-                    total_created += 1
-            except Exception as e:
-                print("Error creating tag: " + str(e))
-
-        # Small delay between chunks
-        if chunk_end < total_tags:
-            time.sleep(0.5)
-
-    return total_created
-
-
-def import_deltav_tags(opc_server, base_opc_path, tag_provider, root_folder, search_tag_name, data_type='Float8', chunk_size=50):
-    """
-    Main function to import DeltaV OPC tags with mirrored folder structure.
-
-    Args:
-        opc_server (str): Name of the OPC UA connection in Ignition
-        base_opc_path (str): Base OPC path to start browsing from
-        tag_provider (str): Ignition tag provider name (e.g., 'default')
-        root_folder (str): Root folder name in Ignition where tags will be created
-        search_tag_name (str): Tag name to search for (e.g., 'CV', 'PV')
-        data_type (str): Data type for created tags (default: 'Float8')
-        chunk_size (int): Number of tags to create at once (default: 50)
-
-    Returns:
-        dict: Summary of the import operation
-    """
-    print("=" * 80)
-    print("Starting DeltaV OPC Tag Import (Timeout Optimized)")
-    print("=" * 80)
-    print("OPC Server: " + opc_server)
-    print("Base OPC Path: " + base_opc_path)
-    print("Tag Provider: " + tag_provider)
-    print("Root Folder: " + root_folder)
-    print("Search Tag Name: " + search_tag_name)
-    print("Data Type: " + data_type)
-    print("Chunk Size: " + str(chunk_size))
+    print("\n" + "=" * 80)
+    print("CREATING TAGS IN IGNITION")
     print("=" * 80)
 
-    # Progress callback to keep connection alive
-    last_update_time = [time.time()]  # Use list to make it mutable in nested function
-
-    def progress_update(message):
-        current_time = time.time()
-        if current_time - last_update_time[0] > 5:  # Update every 5 seconds
-            print("[PROGRESS] " + message)
-            last_update_time[0] = current_time
-
-    # Step 1: Browse OPC server recursively to find matching tags
-    print("\nStep 1: Browsing OPC server...")
-    print("This may take several minutes for large structures...")
-
-    start_time = time.time()
-    found_tags = browse_opc_recursive(opc_server, base_opc_path, search_tag_name, progress_callback=progress_update)
-    browse_time = time.time() - start_time
-
-    print("Found " + str(len(found_tags)) + " matching tags in " + str(int(browse_time)) + " seconds")
-
-    if len(found_tags) == 0:
-        print("No tags found matching criteria. Exiting.")
-        return {'success': False, 'tags_created': 0, 'folders_created': 0}
-
-    # Step 2: Create root folder
-    print("\nStep 2: Creating root folder structure...")
+    # Create root folder
+    print("\nCreating root folder: " + root_folder)
     root_path = create_folder_structure(tag_provider, '', root_folder)
     folders_created = 1
 
-    # Step 3: Build tag configurations and create folder structure
-    print("\nStep 3: Analyzing folder structure and preparing tags...")
-    tag_configs = []
-    folder_cache = set()  # Track created folders to avoid duplicates
+    # Build folder structure and tag configs
+    print("\nAnalyzing folder structure...")
+    folder_cache = set()
+    tags_created = 0
 
     for idx, tag_info in enumerate(found_tags):
-        if (idx + 1) % 100 == 0:
-            print("Processed " + str(idx + 1) + " / " + str(len(found_tags)) + " tags")
+        if (idx + 1) % 50 == 0:
+            print("Processing tag " + str(idx + 1) + " / " + str(len(found_tags)))
 
         try:
-            # Get relative path from base OPC path
-            relative_path = get_relative_path(tag_info['opc_path'], base_opc_path)
+            relative_path = tag_info['relative_path']
+            display_name = tag_info['display_name']
+            node_id = tag_info['node_id']
 
-            # Split relative path into folders and tag name
+            # Split into folder structure and tag name
             path_parts = relative_path.split('/')
-
-            # The last part should be the tag name
-            opc_tag_name = path_parts[-1]
-
-            # Everything except the last part is the folder structure
             folder_structure = path_parts[:-1]
 
-            # Create nested folder structure
+            # Create folder structure
             current_path = root_path
             for folder_name in folder_structure:
                 folder_key = current_path + '/' + folder_name
@@ -381,46 +360,44 @@ def import_deltav_tags(opc_server, base_opc_path, tag_provider, root_folder, sea
                     folder_cache.add(folder_key)
                     folders_created += 1
                 else:
-                    # Folder already created, just update path
                     if current_path.endswith('/'):
                         current_path = current_path + folder_name
                     else:
                         current_path = current_path + '/' + folder_name
 
-            # Add tag configuration to list
-            tag_configs.append({
-                'tag_provider': tag_provider,
-                'tag_path': current_path,
-                'tag_name': opc_tag_name,
-                'opc_server': opc_server,
-                'opc_item_path': tag_info['opc_path'],
-                'data_type': data_type
-            })
+            # Create the tag
+            success = create_opc_tag(
+                tag_provider,
+                current_path,
+                display_name,
+                opc_server,
+                node_id,
+                data_type
+            )
+
+            if success:
+                tags_created += 1
+
+            # Small delay every chunk_size tags
+            if (idx + 1) % chunk_size == 0:
+                time.sleep(0.5)
 
         except Exception as e:
-            print("Error processing tag '" + tag_info['opc_path'] + "': " + str(e))
+            print("Error processing tag: " + str(e))
             import traceback
             traceback.print_exc()
 
-    # Step 4: Create tags in chunks
-    print("\nStep 4: Creating " + str(len(tag_configs)) + " tags in chunks of " + str(chunk_size) + "...")
-    tags_created = create_tags_in_chunks(tag_configs, chunk_size)
-
-    # Print summary
     print("\n" + "=" * 80)
-    print("Import Complete!")
+    print("TAG CREATION COMPLETE")
     print("=" * 80)
     print("Tags Created: " + str(tags_created) + " / " + str(len(found_tags)))
     print("Folders Created: " + str(folders_created))
-    print("Total Time: " + str(int(time.time() - start_time)) + " seconds")
     print("=" * 80)
 
     return {
         'success': True,
-        'tags_found': len(found_tags),
         'tags_created': tags_created,
-        'folders_created': folders_created,
-        'browse_time_seconds': int(browse_time)
+        'folders_created': folders_created
     }
 
 
@@ -431,11 +408,10 @@ def main():
     # ========== CONFIGURATION PARAMETERS ==========
 
     # OPC UA server connection name as configured in Ignition
-    OPC_SERVER = 'DeltaVEdge'
+    OPC_SERVER = 'DeltaV Edge OPC UA'
 
-    # Base OPC UA path (starting point for browsing)
-    # Example: 'nsu=http://inmation.com/UA/;s=/System/Core/DeltaVSystems/DELTAV_SYSTEM/ControlStrategies/BIOREACTOR/CELL_CULTURE/BRX001/'
-    BASE_OPC_PATH = 'nsu=http://inmation.com/UA/;s=/System/Core/DeltaVSystems/DELTAV_SYSTEM/ControlStrategies/BIOREACTOR/CELL_CULTURE/BRX001/'
+    # Base OPC UA node ID (starting point for browsing)
+    BASE_NODE_ID = 'nsu=http://inmation.com/UA/;s=/System/Core/DeltaVSystems/DELTAV_SYSTEM/ControlStrategies/BIOREACTOR/CELL_CULTURE/BRX001'
 
     # Tag provider in Ignition (typically 'default')
     TAG_PROVIDER = 'default'
@@ -454,18 +430,76 @@ def main():
     # Number of tags to create at once (smaller = slower but more reliable)
     CHUNK_SIZE = 50
 
+    # Maximum number of browse iterations (safety limit)
+    MAX_ITERATIONS = 2000
+
+    # DRY RUN MODE - Set to True to only print paths without creating tags
+    DRY_RUN = True  # Change to False to actually create tags
+
     # ========== END CONFIGURATION ==========
 
-    # Execute the import
-    result = import_deltav_tags(
+    print("=" * 80)
+    print("DeltaV OPC Tag Import - Iterative Browsing")
+    print("=" * 80)
+    print("OPC Server: " + OPC_SERVER)
+    print("Base Node: " + BASE_NODE_ID)
+    print("Tag Provider: " + TAG_PROVIDER)
+    print("Root Folder: " + ROOT_FOLDER)
+    print("Search Tag Name: " + str(SEARCH_TAG_NAME))
+    print("Data Type: " + DATA_TYPE)
+    print("DRY RUN: " + str(DRY_RUN))
+    print("=" * 80 + "\n")
+
+    start_time = time.time()
+
+    # Step 1: Browse OPC server iteratively
+    print("Step 1: Browsing OPC server...")
+    found_tags = browse_opc_iterative(
         OPC_SERVER,
-        BASE_OPC_PATH,
-        TAG_PROVIDER,
-        ROOT_FOLDER,
+        BASE_NODE_ID,
         SEARCH_TAG_NAME,
-        DATA_TYPE,
-        CHUNK_SIZE
+        MAX_ITERATIONS
     )
+
+    browse_time = time.time() - start_time
+
+    if len(found_tags) == 0:
+        print("\nNo tags found matching criteria. Exiting.")
+        return {'success': False, 'tags_found': 0}
+
+    # Step 2: Print or create tags
+    if DRY_RUN:
+        print("\n*** DRY RUN MODE - Only printing paths, not creating tags ***")
+        print_tag_paths(found_tags, ROOT_FOLDER, TAG_PROVIDER)
+
+        print("\nTo actually create these tags:")
+        print("1. Review the paths above")
+        print("2. Set DRY_RUN = False in the configuration")
+        print("3. Run the script again")
+
+        result = {
+            'success': True,
+            'dry_run': True,
+            'tags_found': len(found_tags),
+            'browse_time_seconds': int(browse_time)
+        }
+    else:
+        print("\n*** LIVE MODE - Creating tags in Ignition ***")
+        result = create_tags_from_list(
+            found_tags,
+            OPC_SERVER,
+            TAG_PROVIDER,
+            ROOT_FOLDER,
+            DATA_TYPE,
+            CHUNK_SIZE
+        )
+        result['browse_time_seconds'] = int(browse_time)
+        result['total_time_seconds'] = int(time.time() - start_time)
+
+    print("\n" + "=" * 80)
+    print("SCRIPT COMPLETE")
+    print("Total Time: " + str(int(time.time() - start_time)) + " seconds")
+    print("=" * 80)
 
     return result
 
@@ -473,4 +507,4 @@ def main():
 # ========== EXECUTION ==========
 # Run the main function
 if __name__ == '__main__' or True:  # The 'or True' ensures it runs in Ignition Script Console
-    main()
+    result = main()
