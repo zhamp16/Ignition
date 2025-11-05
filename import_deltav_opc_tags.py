@@ -93,28 +93,38 @@ def browse_opc_iterative(opc_server, base_node_id, search_tag_name=None, max_ite
                 else:
                     item_relative_path = display_name
 
-                # Check if this is a folder (Object) or a variable
-                # We need to determine this by trying to browse into it
-                # or checking the node class
-                node_class = item.getNodeClass()
+                # Determine if this is a folder or a variable
+                # Strategy: If the name matches our search criteria, assume it's a tag
+                # Otherwise, try browsing into it to see if it's a folder
+                is_folder = False
+                matches_search = (search_tag_name is None or display_name == search_tag_name)
 
-                # NodeClass values:
-                # 1 = Object (folder)
-                # 2 = Variable (tag)
-                if node_class.getValue() == 1:  # Object/Folder
-                    # Add to browse queue if we haven't visited it
-                    if item_node_id not in visited:
-                        browse_queue.append((item_node_id, item_relative_path))
-                        visited.add(item_node_id)
+                if matches_search:
+                    # If it matches our search, it's likely a tag - save it
+                    found_tags.append({
+                        'node_id': item_node_id,
+                        'display_name': display_name,
+                        'relative_path': item_relative_path
+                    })
+                    # Don't browse further into tags
+                    continue
 
-                elif node_class.getValue() == 2:  # Variable/Tag
-                    # Check if this matches our search criteria
-                    if search_tag_name is None or display_name == search_tag_name:
-                        found_tags.append({
-                            'node_id': item_node_id,
-                            'display_name': display_name,
-                            'relative_path': item_relative_path
-                        })
+                # Item doesn't match search - check if it's a folder by trying to browse it
+                try:
+                    # Try to browse into this item
+                    child_items = system.opc.browseServer(opc_server, item_node_id)
+
+                    # If it returns items, it's a folder
+                    if child_items and len(child_items) > 0:
+                        is_folder = True
+                except:
+                    # If browsing fails, it's not a folder
+                    is_folder = False
+
+                # If it's a folder, add to queue for further browsing
+                if is_folder and item_node_id not in visited:
+                    browse_queue.append((item_node_id, item_relative_path))
+                    visited.add(item_node_id)
 
         except Exception as e:
             print("Error browsing node '" + str(current_node_id) + "': " + str(e))
