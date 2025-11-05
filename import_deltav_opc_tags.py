@@ -1,11 +1,18 @@
 """
 Ignition Script: Recursively Import DeltaV OPC Tags with Mirrored Folder Structure
+Version 2.0 - Timeout Optimized
 
 Description:
     This script recursively browses an OPC UA server starting from a base path,
     searches for specific tag names (e.g., "CV", "PV"), and creates a mirrored
     folder structure in Ignition's tag browser with OPC tags pointing to the
     found items.
+
+    V2.0 Changes:
+    - Added timeout handling and retry logic
+    - Progress updates to keep connection alive
+    - Chunked tag creation to prevent timeouts
+    - Better error recovery
 
 Usage:
     1. Update the configuration parameters in the main() function
@@ -15,7 +22,9 @@ Author: Claude AI
 Date: 2025-11-05
 """
 
-def browse_opc_recursive(opc_server, opc_path, search_tag_name=None, max_depth=50, current_depth=0):
+import time
+
+def browse_opc_recursive(opc_server, opc_path, search_tag_name=None, max_depth=50, current_depth=0, progress_callback=None):
     """
     Recursively browse OPC server and find tags matching search criteria.
 
@@ -25,6 +34,7 @@ def browse_opc_recursive(opc_server, opc_path, search_tag_name=None, max_depth=5
         search_tag_name (str): Tag name to search for (e.g., "CV", "PV"). If None, returns all tags.
         max_depth (int): Maximum recursion depth to prevent infinite loops
         current_depth (int): Current recursion depth
+        progress_callback (function): Optional callback function for progress updates
 
     Returns:
         list: List of dictionaries containing tag information
@@ -38,15 +48,40 @@ def browse_opc_recursive(opc_server, opc_path, search_tag_name=None, max_depth=5
         return found_tags
 
     try:
-        # Browse the current OPC path
-        browse_results = system.opc.browse(opc_server, opc_path)
+        # Progress update to keep connection alive
+        if progress_callback:
+            progress_callback("Browsing: " + opc_path)
+
+        # Browse the current OPC path with retry logic
+        browse_results = None
+        max_retries = 3
+        retry_delay = 2  # seconds
+
+        for attempt in range(max_retries):
+            try:
+                browse_results = system.opc.browse(opc_server, opc_path)
+                break  # Success, exit retry loop
+            except Exception as browse_error:
+                if attempt < max_retries - 1:
+                    print("Browse attempt " + str(attempt + 1) + " failed, retrying in " + str(retry_delay) + "s: " + str(browse_error))
+                    time.sleep(retry_delay)
+                else:
+                    print("Browse failed after " + str(max_retries) + " attempts: " + opc_path)
+                    raise browse_error
 
         if browse_results is None:
             print("Warning: No browse results for path: " + opc_path)
             return found_tags
 
         # Process each item in the browse results
+        item_count = 0
         for result in browse_results:
+            item_count += 1
+
+            # Progress update every 10 items
+            if item_count % 10 == 0 and progress_callback:
+                progress_callback("Browsed " + str(item_count) + " items in " + opc_path)
+
             item_name = result.getDisplayName()
             item_type = result.getNodeClass()
 
@@ -66,7 +101,8 @@ def browse_opc_recursive(opc_server, opc_path, search_tag_name=None, max_depth=5
                         full_path,
                         search_tag_name,
                         max_depth,
-                        current_depth + 1
+                        current_depth + 1,
+                        progress_callback
                     )
                 )
             elif item_type.getValue() == 2:  # Variable/Tag
@@ -216,7 +252,49 @@ def create_opc_tag(tag_provider, tag_path, tag_name, opc_server, opc_item_path, 
         return False
 
 
-def import_deltav_tags(opc_server, base_opc_path, tag_provider, root_folder, search_tag_name, data_type='Float8'):
+def create_tags_in_chunks(tag_configs, chunk_size=50):
+    """
+    Create multiple tags in chunks to prevent timeouts.
+
+    Args:
+        tag_configs (list): List of tag configuration dictionaries
+        chunk_size (int): Number of tags to create at once
+
+    Returns:
+        int: Number of successfully created tags
+    """
+    total_created = 0
+    total_tags = len(tag_configs)
+
+    for i in range(0, total_tags, chunk_size):
+        chunk = tag_configs[i:i + chunk_size]
+        chunk_end = min(i + chunk_size, total_tags)
+
+        print("Creating tags " + str(i + 1) + " to " + str(chunk_end) + " of " + str(total_tags))
+
+        for config in chunk:
+            try:
+                success = create_opc_tag(
+                    config['tag_provider'],
+                    config['tag_path'],
+                    config['tag_name'],
+                    config['opc_server'],
+                    config['opc_item_path'],
+                    config['data_type']
+                )
+                if success:
+                    total_created += 1
+            except Exception as e:
+                print("Error creating tag: " + str(e))
+
+        # Small delay between chunks
+        if chunk_end < total_tags:
+            time.sleep(0.5)
+
+    return total_created
+
+
+def import_deltav_tags(opc_server, base_opc_path, tag_provider, root_folder, search_tag_name, data_type='Float8', chunk_size=50):
     """
     Main function to import DeltaV OPC tags with mirrored folder structure.
 
@@ -227,12 +305,13 @@ def import_deltav_tags(opc_server, base_opc_path, tag_provider, root_folder, sea
         root_folder (str): Root folder name in Ignition where tags will be created
         search_tag_name (str): Tag name to search for (e.g., 'CV', 'PV')
         data_type (str): Data type for created tags (default: 'Float8')
+        chunk_size (int): Number of tags to create at once (default: 50)
 
     Returns:
         dict: Summary of the import operation
     """
     print("=" * 80)
-    print("Starting DeltaV OPC Tag Import")
+    print("Starting DeltaV OPC Tag Import (Timeout Optimized)")
     print("=" * 80)
     print("OPC Server: " + opc_server)
     print("Base OPC Path: " + base_opc_path)
@@ -240,12 +319,27 @@ def import_deltav_tags(opc_server, base_opc_path, tag_provider, root_folder, sea
     print("Root Folder: " + root_folder)
     print("Search Tag Name: " + search_tag_name)
     print("Data Type: " + data_type)
+    print("Chunk Size: " + str(chunk_size))
     print("=" * 80)
+
+    # Progress callback to keep connection alive
+    last_update_time = [time.time()]  # Use list to make it mutable in nested function
+
+    def progress_update(message):
+        current_time = time.time()
+        if current_time - last_update_time[0] > 5:  # Update every 5 seconds
+            print("[PROGRESS] " + message)
+            last_update_time[0] = current_time
 
     # Step 1: Browse OPC server recursively to find matching tags
     print("\nStep 1: Browsing OPC server...")
-    found_tags = browse_opc_recursive(opc_server, base_opc_path, search_tag_name)
-    print("Found " + str(len(found_tags)) + " matching tags")
+    print("This may take several minutes for large structures...")
+
+    start_time = time.time()
+    found_tags = browse_opc_recursive(opc_server, base_opc_path, search_tag_name, progress_callback=progress_update)
+    browse_time = time.time() - start_time
+
+    print("Found " + str(len(found_tags)) + " matching tags in " + str(int(browse_time)) + " seconds")
 
     if len(found_tags) == 0:
         print("No tags found matching criteria. Exiting.")
@@ -255,11 +349,16 @@ def import_deltav_tags(opc_server, base_opc_path, tag_provider, root_folder, sea
     print("\nStep 2: Creating root folder structure...")
     root_path = create_folder_structure(tag_provider, '', root_folder)
     folders_created = 1
-    tags_created = 0
 
-    # Step 3: Process each found tag
-    print("\nStep 3: Creating tags and folder structure...")
-    for tag_info in found_tags:
+    # Step 3: Build tag configurations and create folder structure
+    print("\nStep 3: Analyzing folder structure and preparing tags...")
+    tag_configs = []
+    folder_cache = set()  # Track created folders to avoid duplicates
+
+    for idx, tag_info in enumerate(found_tags):
+        if (idx + 1) % 100 == 0:
+            print("Processed " + str(idx + 1) + " / " + str(len(found_tags)) + " tags")
+
         try:
             # Get relative path from base OPC path
             relative_path = get_relative_path(tag_info['opc_path'], base_opc_path)
@@ -276,26 +375,36 @@ def import_deltav_tags(opc_server, base_opc_path, tag_provider, root_folder, sea
             # Create nested folder structure
             current_path = root_path
             for folder_name in folder_structure:
-                current_path = create_folder_structure(tag_provider, current_path, folder_name)
-                folders_created += 1
+                folder_key = current_path + '/' + folder_name
+                if folder_key not in folder_cache:
+                    current_path = create_folder_structure(tag_provider, current_path, folder_name)
+                    folder_cache.add(folder_key)
+                    folders_created += 1
+                else:
+                    # Folder already created, just update path
+                    if current_path.endswith('/'):
+                        current_path = current_path + folder_name
+                    else:
+                        current_path = current_path + '/' + folder_name
 
-            # Create the OPC tag
-            success = create_opc_tag(
-                tag_provider,
-                current_path,
-                opc_tag_name,
-                opc_server,
-                tag_info['opc_path'],
-                data_type
-            )
-
-            if success:
-                tags_created += 1
+            # Add tag configuration to list
+            tag_configs.append({
+                'tag_provider': tag_provider,
+                'tag_path': current_path,
+                'tag_name': opc_tag_name,
+                'opc_server': opc_server,
+                'opc_item_path': tag_info['opc_path'],
+                'data_type': data_type
+            })
 
         except Exception as e:
             print("Error processing tag '" + tag_info['opc_path'] + "': " + str(e))
             import traceback
             traceback.print_exc()
+
+    # Step 4: Create tags in chunks
+    print("\nStep 4: Creating " + str(len(tag_configs)) + " tags in chunks of " + str(chunk_size) + "...")
+    tags_created = create_tags_in_chunks(tag_configs, chunk_size)
 
     # Print summary
     print("\n" + "=" * 80)
@@ -303,13 +412,15 @@ def import_deltav_tags(opc_server, base_opc_path, tag_provider, root_folder, sea
     print("=" * 80)
     print("Tags Created: " + str(tags_created) + " / " + str(len(found_tags)))
     print("Folders Created: " + str(folders_created))
+    print("Total Time: " + str(int(time.time() - start_time)) + " seconds")
     print("=" * 80)
 
     return {
         'success': True,
         'tags_found': len(found_tags),
         'tags_created': tags_created,
-        'folders_created': folders_created
+        'folders_created': folders_created,
+        'browse_time_seconds': int(browse_time)
     }
 
 
@@ -340,6 +451,9 @@ def main():
     # Common types: 'Float8', 'Float4', 'Int4', 'Int8', 'Boolean', 'String'
     DATA_TYPE = 'Float8'
 
+    # Number of tags to create at once (smaller = slower but more reliable)
+    CHUNK_SIZE = 50
+
     # ========== END CONFIGURATION ==========
 
     # Execute the import
@@ -349,7 +463,8 @@ def main():
         TAG_PROVIDER,
         ROOT_FOLDER,
         SEARCH_TAG_NAME,
-        DATA_TYPE
+        DATA_TYPE,
+        CHUNK_SIZE
     )
 
     return result
