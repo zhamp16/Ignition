@@ -4,14 +4,37 @@
 
 This script automatically imports tags from a DeltaV Edge OPC UA server into Ignition, creating a mirrored folder structure that matches the OPC server hierarchy.
 
+**Version 2.1** - Now uses iterative browsing to prevent timeout issues!
+
 ## Features
 
-- **Recursive OPC Browsing**: Automatically traverses the entire OPC server structure
+- **Iterative OPC Browsing**: Uses queue-based browsing to prevent 30-second timeouts
+- **system.opc.browseServer**: Properly uses Ignition's OPC browsing function
 - **Selective Tag Import**: Search for specific tag names (e.g., "CV", "PV", "SP")
 - **Mirrored Folder Structure**: Creates the same folder hierarchy in Ignition as exists on the OPC server
+- **Dry Run Mode**: Test and preview what will be created before actually creating tags
 - **Configurable**: Easy-to-modify parameters for different use cases
 - **Safe**: Checks for existing tags and folders to prevent duplicates
 - **Detailed Logging**: Provides comprehensive feedback during execution
+
+## What's New in V2.1
+
+- ✅ Changed from recursive to iterative browsing (no more timeouts!)
+- ✅ Uses `system.opc.browseServer()` instead of `system.opc.browse()`
+- ✅ Added **DRY_RUN** mode to preview results before creating tags
+- ✅ Better handling of OPC UA node IDs
+- ✅ Automatic skipping of #Properties folders
+- ✅ Progress updates show iterations, queue size, and tags found
+
+## Quick Start
+
+**See [QUICK_START.md](QUICK_START.md) for detailed step-by-step instructions.**
+
+1. Configure OPC connection name
+2. Find your base node ID
+3. Set `DRY_RUN = True` and test
+4. Review the output
+5. Set `DRY_RUN = False` to create tags
 
 ## Requirements
 
@@ -22,8 +45,8 @@ This script automatically imports tags from a DeltaV Edge OPC UA server into Ign
 ## Installation
 
 1. Copy `import_deltav_opc_tags.py` to your Ignition project
-2. Open the Ignition Designer
-3. Navigate to the Script Console or create a Gateway Script
+2. Open the Ignition Script Console
+3. Paste the entire script and configure the parameters
 
 ## Configuration
 
@@ -31,10 +54,10 @@ Edit the `main()` function in the script to set your parameters:
 
 ```python
 # OPC UA server connection name as configured in Ignition
-OPC_SERVER = 'DeltaVEdge'
+OPC_SERVER = 'DeltaV Edge OPC UA'
 
-# Base OPC UA path (starting point for browsing)
-BASE_OPC_PATH = 'nsu=http://inmation.com/UA/;s=/System/Core/DeltaVSystems/DELTAV_SYSTEM/ControlStrategies/BIOREACTOR/CELL_CULTURE/BRX001/'
+# Base OPC UA node ID (starting point for browsing)
+BASE_NODE_ID = 'nsu=http://inmation.com/UA/;s=/System/Core/DeltaVSystems/DELTAV_SYSTEM/ControlStrategies/BIOREACTOR/CELL_CULTURE/BRX001'
 
 # Tag provider in Ignition (typically 'default')
 TAG_PROVIDER = 'default'
@@ -48,6 +71,9 @@ SEARCH_TAG_NAME = 'CV'
 
 # Data type for created tags
 DATA_TYPE = 'Float8'
+
+# DRY RUN - Set to True to only print paths without creating tags
+DRY_RUN = True  # Change to False to actually create tags
 ```
 
 ## Usage Examples
