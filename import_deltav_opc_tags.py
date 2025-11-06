@@ -7,11 +7,19 @@ Description:
     to find tags matching search criteria. This prevents timeout issues by doing
     multiple small browse operations instead of one large recursive operation.
 
+    The script browses the ENTIRE folder hierarchy depth-first, and only checks for
+    matching tag names at leaf nodes (items with no children). This allows it to find
+    tags at any depth, such as:
+    - BRX-AI-001/PV/CV
+    - BRX-AIC-005/PID1/PV/CV
+    - BRX-AIC-005/PID1/OUT/CV
+
     V2.1 Changes:
     - Changed from system.opc.browse() to system.opc.browseServer()
     - Replaced recursion with iterative queue-based browsing
     - Added dry-run mode to print tag paths without creating them
     - Better handling of OPC UA node IDs
+    - Explores full hierarchy depth to find tags at any level
 
 Usage:
     1. Update the configuration parameters in the main() function
@@ -30,15 +38,24 @@ def browse_opc_iterative(opc_server, base_node_id, search_tag_name=None, max_ite
     """
     Iteratively browse OPC server using a queue to avoid recursion timeouts.
 
+    This function explores the ENTIRE folder hierarchy by browsing into every item.
+    It only checks for matching tag names at leaf nodes (items with no children).
+    This allows finding tags at any depth in the hierarchy.
+
     Args:
         opc_server (str): Name of the OPC connection in Ignition
         base_node_id (str): Starting OPC node ID (e.g., 'nsu=http://...;s=/path')
-        search_tag_name (str): Tag name to search for (e.g., "CV", "PV"). If None, returns all tags.
+        search_tag_name (str): Tag name to search for (e.g., "CV", "PV"). If None, returns all leaf tags.
         max_iterations (int): Maximum number of browse operations to prevent infinite loops
 
     Returns:
         list: List of dictionaries containing tag information
-              Format: [{'node_id': 'full_node_id', 'display_name': 'CV', 'relative_path': 'BRX-AI-001/PV/CV'}]
+              Format: [{'node_id': 'full_node_id', 'display_name': 'CV', 'relative_path': 'BRX-AIC-005/PID1/PV/CV'}]
+
+    Example paths found:
+        - BRX-AI-001/PV/CV (2 levels deep)
+        - BRX-AIC-005/PID1/PV/CV (3 levels deep)
+        - BRX-AIC-005/PID1/OUT/CV (3 levels deep in different folder)
     """
     found_tags = []
 
@@ -93,38 +110,39 @@ def browse_opc_iterative(opc_server, base_node_id, search_tag_name=None, max_ite
                 else:
                     item_relative_path = display_name
 
-                # Determine if this is a folder or a variable
-                # Strategy: If the name matches our search criteria, assume it's a tag
-                # Otherwise, try browsing into it to see if it's a folder
+                # Determine if this is a folder or a leaf node (tag/variable)
+                # Strategy: Always try to browse into every item first
+                # If it has children, it's a folder - continue browsing
+                # If it has no children (leaf node), check if it matches search criteria
                 is_folder = False
-                matches_search = (search_tag_name is None or display_name == search_tag_name)
 
-                if matches_search:
-                    # If it matches our search, it's likely a tag - save it
-                    found_tags.append({
-                        'node_id': item_node_id,
-                        'display_name': display_name,
-                        'relative_path': item_relative_path
-                    })
-                    # Don't browse further into tags
-                    continue
-
-                # Item doesn't match search - check if it's a folder by trying to browse it
                 try:
-                    # Try to browse into this item
+                    # Try to browse into this item to see if it has children
                     child_items = system.opc.browseServer(opc_server, item_node_id)
 
                     # If it returns items, it's a folder
                     if child_items and len(child_items) > 0:
                         is_folder = True
                 except:
-                    # If browsing fails, it's not a folder
+                    # If browsing fails, it's a leaf node (not a folder)
                     is_folder = False
 
-                # If it's a folder, add to queue for further browsing
-                if is_folder and item_node_id not in visited:
-                    browse_queue.append((item_node_id, item_relative_path))
-                    visited.add(item_node_id)
+                if is_folder:
+                    # It's a folder - add to queue for further browsing
+                    if item_node_id not in visited:
+                        browse_queue.append((item_node_id, item_relative_path))
+                        visited.add(item_node_id)
+                else:
+                    # It's a leaf node - check if it matches our search criteria
+                    matches_search = (search_tag_name is None or display_name == search_tag_name)
+
+                    if matches_search:
+                        # This is a tag that matches our search - save it
+                        found_tags.append({
+                            'node_id': item_node_id,
+                            'display_name': display_name,
+                            'relative_path': item_relative_path
+                        })
 
         except Exception as e:
             print("Error browsing node '" + str(current_node_id) + "': " + str(e))
