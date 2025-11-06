@@ -91,7 +91,9 @@ Before creating the message handler, we need to make the import functions availa
 5. Copy the entire contents of `import_deltav_opc_tags_ui.py` and paste it into this script
 6. **Save the project**
 
-Now the functions will be available to the message handler via: `from project.opc_import import import_deltav_tags_ui`
+Now the functions will be available to the message handler directly via: `opc_import.import_deltav_tags_ui()`
+
+**Important:** Make sure your gateway script project is set to this project so the project library is accessible.
 
 ## Step 3: Create the Gateway Message Handler
 
@@ -105,10 +107,9 @@ Now the functions will be available to the message handler via: `from project.op
 # Created in: Designer > Gateway Events > Message Handlers
 # Function signature must be: handleMessage(payload)
 
-import system.tag
-import system.util
-import system.date
+# Import standard Python libraries (system.* libraries are available by default)
 import time
+import json
 
 def update_progress(message):
 	"""Write a progress message to the Progress tag"""
@@ -163,7 +164,6 @@ def run_import_script():
 		max_iterations = config_values[7].value
 
 		# Parse search tag names from JSON
-		import json
 		search_tag_names = json.loads(search_tag_names_json)
 
 		update_progress('Starting DeltaV OPC Tag Import...')
@@ -173,12 +173,9 @@ def run_import_script():
 		update_progress('Dry Run: ' + str(dry_run))
 		update_progress('=' * 80)
 
-		# Import the functions from project library
-		# Make sure you completed Step 2 (added opc_import to project library)
-		from project.opc_import import import_deltav_tags_ui
-
-		# Call the import function with our update_progress callback
-		result = import_deltav_tags_ui(
+		# Call the import function from project library
+		# No import needed - gateway script project is set to this project
+		result = opc_import.import_deltav_tags_ui(
 			opc_server=opc_server,
 			base_node_id=base_node_id,
 			tag_provider=tag_provider,
@@ -220,7 +217,7 @@ def handleMessage(payload):
 	Returns:
 		dict: Response dictionary
 	"""
-	# Get the action from payload
+	# Get the action from payload (dictionary subscript)
 	action = payload['action']
 
 	if action == 'start_import':
@@ -328,20 +325,30 @@ system.tag.writeBlocking(['[default]OPC_Import/Progress'], [''])
 
 ## Important Notes
 
-### Project Library Script Location
+### Project Library Access
 
-The import functions MUST be in the project library (Step 2) because:
-- Message handlers are gateway-scoped
-- They can't access modules from external files
-- Project library scripts are available to all gateway scripts
+**Gateway Script Project Setting:**
+- In Gateway webpage > **Config** > **Scripting** > **Gateway Scripting Project**
+- Set to the project containing your `opc_import` script
+- This allows message handlers to access project library scripts directly
 
-### If Import Fails
+**How it works:**
+- System libraries (`system.tag`, `system.util`, etc.) are available by default - no import needed
+- Project library scripts are accessible directly: `opc_import.functionName()`
+- Standard Python libraries (`time`, `json`, etc.) must be imported as usual
 
-If you get `ImportError: No module named project.opc_import`:
-1. Verify the script is saved in Project Library (not a module folder)
-2. Script name must be exactly `opc_import` (no .py extension shown in Designer)
+### If Script Fails
+
+**NameError: name 'opc_import' is not defined:**
+1. Verify gateway script project is set to your project
+2. Script name in Project Library must be exactly `opc_import`
 3. Save the project after adding the script
-4. The import line should be: `from project.opc_import import import_deltav_tags_ui`
+4. Restart gateway if needed
+
+**Functions not found:**
+1. Verify all functions are in the `opc_import` script
+2. Check function names match (case-sensitive)
+3. Make sure the script saved successfully
 
 ## Benefits of This Approach
 
