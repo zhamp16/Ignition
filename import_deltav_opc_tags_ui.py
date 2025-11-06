@@ -1,15 +1,123 @@
 """
 Ignition Script: DeltaV OPC Tag Import - UI Version with Progress Callbacks
-Version 2.3 - Real-time UI Progress Updates
+Version 2.3 - Nested Root Folders, Auto Data Type Detection, and Real-time UI Progress Updates
 
 This version is designed to run from a Perspective view with real-time progress updates
 displayed in the UI. It uses callback functions to send status messages back to the view.
 
+V2.3 Features (NEW):
+    - Nested root folders: Use paths like 'DELTAV_SYSTEM/BIOREACTOR/CELL_CULTURE/BRX001'
+      Result: [default]DELTAV_SYSTEM/BIOREACTOR/CELL_CULTURE/BRX001/BRX-AGIT-CTL/A_PV/CV
+    - Automatic data type detection: Pass data_type=None to read actual OPC data types
+      (Float8, Int4, Boolean, String) instead of using a fixed type
+
 Usage:
-    See example_perspective_view_setup.md for how to create the UI and call this script.
+    See PERSPECTIVE_VIEW_SETUP.md for how to create the UI and call this script.
 """
 
 import time
+
+
+def detect_opc_data_type(opc_server, opc_node_id):
+    """
+    Detect the OPC UA data type and map it to an Ignition data type.
+
+    Args:
+        opc_server (str): OPC server connection name
+        opc_node_id (str): OPC UA node ID
+
+    Returns:
+        str: Ignition data type (e.g., 'Float8', 'Int4', 'Boolean', 'String')
+    """
+    try:
+        # Try to read the current value from OPC to determine type
+        value = system.opc.readValue(opc_server, str(opc_node_id))
+
+        if value is not None:
+            # Get the Python type of the value
+            value_type = type(value).__name__
+
+            # Map Python/Java types to Ignition data types
+            type_map = {
+                'float': 'Float8',
+                'java.lang.Float': 'Float4',
+                'java.lang.Double': 'Float8',
+                'int': 'Int4',
+                'long': 'Int8',
+                'java.lang.Integer': 'Int4',
+                'java.lang.Long': 'Int8',
+                'bool': 'Boolean',
+                'java.lang.Boolean': 'Boolean',
+                'str': 'String',
+                'unicode': 'String',
+                'java.lang.String': 'String'
+            }
+
+            # Try to match the type
+            for key, ignition_type in type_map.items():
+                if key.lower() in value_type.lower():
+                    return ignition_type
+
+        # Default to Float8 if we can't determine
+        return 'Float8'
+
+    except Exception as e:
+        # If we can't read the value, default to Float8
+        return 'Float8'
+
+
+def create_nested_folders(tag_provider, root_folder_path, progress_callback=None):
+    """
+    Create a nested folder structure from a path like 'DELTAV_SYSTEM/BIOREACTOR/BRX001'.
+
+    Args:
+        tag_provider (str): Tag provider name
+        root_folder_path (str): Path with '/' separators (e.g., 'DELTAV_SYSTEM/BIOREACTOR/BRX001')
+        progress_callback (function): Function to call with progress messages
+
+    Returns:
+        str: Full path to the deepest folder
+    """
+    # Split the path into individual folder names
+    folders = root_folder_path.split('/')
+
+    current_path = ''
+
+    for folder_name in folders:
+        folder_name = folder_name.strip()
+        if not folder_name:
+            continue
+
+        # Build the full path for checking existence
+        if current_path:
+            if current_path.endswith('/'):
+                new_path = current_path + folder_name
+            else:
+                new_path = current_path + '/' + folder_name
+        else:
+            new_path = folder_name
+
+        full_path_with_provider = '[' + tag_provider + ']' + new_path
+
+        # Check if folder already exists
+        if not system.tag.exists(full_path_with_provider):
+            # Create the folder
+            folder_config = {
+                'name': folder_name,
+                'tagType': 'Folder'
+            }
+
+            config_parent = '[' + tag_provider + ']' + current_path if current_path else '[' + tag_provider + ']'
+
+            try:
+                system.tag.configure(config_parent, [folder_config], 'o')
+                log_message(progress_callback, "Created folder: " + full_path_with_provider)
+            except Exception as e:
+                log_message(progress_callback, "Error creating folder '" + full_path_with_provider + "': " + str(e))
+
+        current_path = new_path
+
+    return current_path
 
 
 def log_message(callback, message):
@@ -105,7 +213,8 @@ def browse_opc_iterative_ui(opc_server, base_node_id, search_tag_names=None, max
                     found_tags.append({
                         'node_id': item_node_id,
                         'display_name': display_name,
-                        'relative_path': item_relative_path
+                        'relative_path': item_relative_path,
+                        'opc_server': opc_server  # Store server name for data type detection
                     })
                     continue
 
@@ -174,9 +283,21 @@ def create_folder_structure_ui(tag_provider, parent_path, folder_name, progress_
     return folder_path
 
 
-def create_opc_tag_ui(tag_provider, tag_path, tag_name, opc_server, opc_node_id, data_type='Float8', progress_callback=None):
+def create_opc_tag_ui(tag_provider, tag_path, tag_name, opc_server, opc_node_id, data_type=None, progress_callback=None):
     """
     UI-friendly version of create_opc_tag with progress callbacks.
+
+    Args:
+        tag_provider (str): Name of the tag provider
+        tag_path (str): Parent path where to create the tag
+        tag_name (str): Name of the tag
+        opc_server (str): OPC server connection name
+        opc_node_id (str): OPC UA node ID
+        data_type (str): Data type for the tag. If None, will auto-detect from OPC server (default: None)
+        progress_callback (function): Function to call with progress messages
+
+    Returns:
+        bool: True if successful, False otherwise
     """
     if tag_provider:
         if tag_path:
@@ -192,6 +313,13 @@ def create_opc_tag_ui(tag_provider, tag_path, tag_name, opc_server, opc_node_id,
     if system.tag.exists(full_tag_path):
         # Don't log every skipped tag to avoid spam
         return True
+
+    # Auto-detect data type if not provided
+    if data_type is None:
+        data_type = detect_opc_data_type(opc_server, opc_node_id)
+        # Only log auto-detection occasionally to avoid spam
+        if len(tag_name) < 10:  # Short names like "CV", "ACTUAL"
+            log_message(progress_callback, "Auto-detected data type for " + tag_name + ": " + data_type)
 
     tag_config = {
         'name': tag_name,
@@ -212,17 +340,39 @@ def create_opc_tag_ui(tag_provider, tag_path, tag_name, opc_server, opc_node_id,
         return False
 
 
-def create_tags_from_list_ui(found_tags, opc_server, tag_provider, root_folder, data_type='Float8', chunk_size=50, progress_callback=None):
+def create_tags_from_list_ui(found_tags, opc_server, tag_provider, root_folder, data_type=None, chunk_size=50, progress_callback=None):
     """
     UI-friendly version of create_tags_from_list with progress callbacks.
+
+    Args:
+        found_tags (list): List of tag information dictionaries
+        opc_server (str): OPC server connection name (only used if data_type is provided)
+        tag_provider (str): Tag provider name
+        root_folder (str): Root folder in Ignition. Can be:
+                           - Simple: 'BRX001'
+                           - Nested: 'DELTAV_SYSTEM/BIOREACTOR/CELL_CULTURE/BRX001'
+        data_type (str): Data type for tags. If None, will auto-detect from OPC server (default: None)
+        chunk_size (int): Number of tags to process before pausing
+        progress_callback (function): Function to call with progress messages
+
+    Returns:
+        dict: Summary of creation operation
     """
     log_message(progress_callback, "\n" + "=" * 80)
     log_message(progress_callback, "CREATING TAGS IN IGNITION")
     log_message(progress_callback, "=" * 80)
 
-    log_message(progress_callback, "\nCreating root folder: " + root_folder)
-    root_path = create_folder_structure_ui(tag_provider, '', root_folder, progress_callback)
-    folders_created = 1
+    # Create root folder (supports nested paths like 'DELTAV_SYSTEM/BIOREACTOR/BRX001')
+    log_message(progress_callback, "\nCreating root folder structure: " + root_folder)
+    if '/' in root_folder:
+        # Nested folder path - use create_nested_folders
+        root_path = create_nested_folders(tag_provider, root_folder, progress_callback)
+        # Count how many folders were created (split by '/')
+        folders_created = len([f for f in root_folder.split('/') if f.strip()])
+    else:
+        # Simple single-level folder - use existing function
+        root_path = create_folder_structure_ui(tag_provider, '', root_folder, progress_callback)
+        folders_created = 1
 
     log_message(progress_callback, "\nAnalyzing folder structure...")
     folder_cache = set()
@@ -236,6 +386,8 @@ def create_tags_from_list_ui(found_tags, opc_server, tag_provider, root_folder, 
             relative_path = tag_info['relative_path']
             display_name = tag_info['display_name']
             node_id = tag_info['node_id']
+            # Get OPC server from tag_info (stored during browsing)
+            tag_opc_server = tag_info.get('opc_server', opc_server)
 
             path_parts = relative_path.split('/')
             folder_structure = path_parts[:-1]
@@ -253,13 +405,14 @@ def create_tags_from_list_ui(found_tags, opc_server, tag_provider, root_folder, 
                     else:
                         current_path = current_path + '/' + folder_name
 
+            # Create the tag with auto-detection if data_type is None
             success = create_opc_tag_ui(
                 tag_provider,
                 current_path,
                 display_name,
-                opc_server,
+                tag_opc_server,
                 node_id,
-                data_type,
+                data_type,  # Pass None to auto-detect, or specific type to use that
                 progress_callback
             )
 
@@ -287,7 +440,7 @@ def create_tags_from_list_ui(found_tags, opc_server, tag_provider, root_folder, 
 
 
 def import_deltav_tags_ui(opc_server, base_node_id, tag_provider, root_folder, search_tag_names,
-                          data_type='Float8', chunk_size=50, max_iterations=2000,
+                          data_type=None, chunk_size=50, max_iterations=2000,
                           dry_run=True, progress_callback=None):
     """
     Main function for UI-based import with progress callbacks.
@@ -296,9 +449,11 @@ def import_deltav_tags_ui(opc_server, base_node_id, tag_provider, root_folder, s
         opc_server (str): OPC server connection name
         base_node_id (str): Base OPC node ID to start browsing from
         tag_provider (str): Ignition tag provider name
-        root_folder (str): Root folder in Ignition
+        root_folder (str): Root folder in Ignition. Can be:
+                           - Simple: 'BRX001'
+                           - Nested: 'DELTAV_SYSTEM/BIOREACTOR/CELL_CULTURE/BRX001'
         search_tag_names (str or list): Tag name(s) to search for
-        data_type (str): Data type for created tags
+        data_type (str): Data type for created tags. If None, will auto-detect from OPC server (default: None)
         chunk_size (int): Number of tags to process before pausing
         max_iterations (int): Maximum browse iterations
         dry_run (bool): If True, only shows what would be created
@@ -308,7 +463,7 @@ def import_deltav_tags_ui(opc_server, base_node_id, tag_provider, root_folder, s
         dict: Summary of the import operation
     """
     log_message(progress_callback, "=" * 80)
-    log_message(progress_callback, "DeltaV OPC Tag Import - UI Version")
+    log_message(progress_callback, "DeltaV OPC Tag Import - UI Version V2.3")
     log_message(progress_callback, "=" * 80)
     log_message(progress_callback, "OPC Server: " + opc_server)
     log_message(progress_callback, "Base Node: " + base_node_id)
@@ -320,7 +475,11 @@ def import_deltav_tags_ui(opc_server, base_node_id, tag_provider, root_folder, s
     else:
         log_message(progress_callback, "Search Tag Name: " + str(search_tag_names))
 
-    log_message(progress_callback, "Data Type: " + data_type)
+    if data_type is None:
+        log_message(progress_callback, "Data Type: Auto-detect from OPC server")
+    else:
+        log_message(progress_callback, "Data Type: " + data_type)
+
     log_message(progress_callback, "DRY RUN: " + str(dry_run))
     log_message(progress_callback, "=" * 80 + "\n")
 

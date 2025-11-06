@@ -1,6 +1,6 @@
 """
 Ignition Script: Recursively Import DeltaV OPC Tags with Mirrored Folder Structure
-Version 2.2 - Multi-Tag Search Support
+Version 2.3 - Nested Root Folders and Automatic Data Type Detection
 
 Description:
     This script uses system.opc.browseServer() with iterative (non-recursive) browsing
@@ -12,6 +12,12 @@ Description:
     - BRX-AIC-005/PID1/PV/CV
     - BRX-AIC-005/PID1/OUT/CV
     - BRX-WIC-001/PID1/MODE/ACTUAL
+
+    V2.3 Features (NEW):
+    - Nested root folders: Use paths like 'DELTAV_SYSTEM/BIOREACTOR/CELL_CULTURE/BRX001'
+      Result: [default]DELTAV_SYSTEM/BIOREACTOR/CELL_CULTURE/BRX001/BRX-AGIT-CTL/A_PV/CV
+    - Automatic data type detection: Set DATA_TYPE = None to read actual OPC data types
+      (Float8, Int4, Boolean, String) instead of using a fixed type
 
     V2.2 Features:
     - Multi-tag search: Search for multiple tag names in one pass (e.g., ['CV', 'ACTUAL'])
@@ -29,15 +35,119 @@ Description:
 Usage:
     1. Update the configuration parameters in the main() function
     2. Set SEARCH_TAG_NAMES to a single tag or list: ['CV', 'ACTUAL']
-    3. Set DRY_RUN = True to test and see what would be created
-    4. Set DRY_RUN = False to actually create the tags
-    5. Run this script from Ignition's Script Console
+    3. Set ROOT_FOLDER to simple or nested path: 'BRX001' or 'DELTAV_SYSTEM/BIOREACTOR/BRX001'
+    4. Set DATA_TYPE = None for auto-detection or a specific type like 'Float8'
+    5. Set DRY_RUN = True to test and see what would be created
+    6. Set DRY_RUN = False to actually create the tags
+    7. Run this script from Ignition's Script Console
 
 Author: Claude AI
-Date: 2025-11-05
+Date: 2025-11-06
 """
 
 import time
+
+
+def detect_opc_data_type(opc_server, opc_node_id):
+    """
+    Detect the OPC UA data type and map it to an Ignition data type.
+
+    Args:
+        opc_server (str): OPC server connection name
+        opc_node_id (str): OPC UA node ID
+
+    Returns:
+        str: Ignition data type (e.g., 'Float8', 'Int4', 'Boolean', 'String')
+    """
+    try:
+        # Try to read the current value from OPC to determine type
+        value = system.opc.readValue(opc_server, str(opc_node_id))
+
+        if value is not None:
+            # Get the Python type of the value
+            value_type = type(value).__name__
+
+            # Map Python/Java types to Ignition data types
+            type_map = {
+                'float': 'Float8',
+                'java.lang.Float': 'Float4',
+                'java.lang.Double': 'Float8',
+                'int': 'Int4',
+                'long': 'Int8',
+                'java.lang.Integer': 'Int4',
+                'java.lang.Long': 'Int8',
+                'bool': 'Boolean',
+                'java.lang.Boolean': 'Boolean',
+                'str': 'String',
+                'unicode': 'String',
+                'java.lang.String': 'String'
+            }
+
+            # Try to match the type
+            for key, ignition_type in type_map.items():
+                if key.lower() in value_type.lower():
+                    return ignition_type
+
+        # Default to Float8 if we can't determine
+        return 'Float8'
+
+    except Exception as e:
+        # If we can't read the value, default to Float8
+        print("Could not detect data type for " + str(opc_node_id) + ", using Float8: " + str(e))
+        return 'Float8'
+
+
+def create_nested_folders(tag_provider, root_folder_path):
+    """
+    Create a nested folder structure from a path like 'DELTAV_SYSTEM/BIOREACTOR/BRX001'.
+
+    Args:
+        tag_provider (str): Tag provider name
+        root_folder_path (str): Path with '/' separators (e.g., 'DELTAV_SYSTEM/BIOREACTOR/BRX001')
+
+    Returns:
+        str: Full path to the deepest folder
+    """
+    # Split the path into individual folder names
+    folders = root_folder_path.split('/')
+
+    current_path = ''
+
+    for folder_name in folders:
+        folder_name = folder_name.strip()
+        if not folder_name:
+            continue
+
+        # Build the full path for checking existence
+        if current_path:
+            if current_path.endswith('/'):
+                new_path = current_path + folder_name
+            else:
+                new_path = current_path + '/' + folder_name
+        else:
+            new_path = folder_name
+
+        full_path_with_provider = '[' + tag_provider + ']' + new_path
+
+        # Check if folder already exists
+        if not system.tag.exists(full_path_with_provider):
+            # Create the folder
+            folder_config = {
+                'name': folder_name,
+                'tagType': 'Folder'
+            }
+
+            config_parent = '[' + tag_provider + ']' + current_path if current_path else '[' + tag_provider + ']'
+
+            try:
+                system.tag.configure(config_parent, [folder_config], 'o')
+                print("Created folder: " + full_path_with_provider)
+            except Exception as e:
+                print("Error creating folder '" + full_path_with_provider + "': " + str(e))
+
+        current_path = new_path
+
+    return current_path
 
 
 def browse_opc_iterative(opc_server, base_node_id, search_tag_names=None, max_iterations=1000):
@@ -154,11 +264,12 @@ def browse_opc_iterative(opc_server, base_node_id, search_tag_names=None, max_it
                     matches_search = display_name in search_list
 
                 if matches_search:
-                    # Found a matching tag - save it!
+                    # Found a matching tag - save it with OPC server for data type detection
                     found_tags.append({
                         'node_id': item_node_id,
                         'display_name': display_name,
-                        'relative_path': item_relative_path
+                        'relative_path': item_relative_path,
+                        'opc_server': opc_server  # Store server name for data type detection
                     })
                     # Don't try to browse into it - continue to next item
                     continue
@@ -206,7 +317,7 @@ def print_tag_paths(found_tags, root_folder, tag_provider='default'):
 
     Args:
         found_tags (list): List of tag information dictionaries
-        root_folder (str): Root folder name in Ignition
+        root_folder (str): Root folder name in Ignition (can be nested like 'DELTAV_SYSTEM/BIOREACTOR/BRX001')
         tag_provider (str): Tag provider name
     """
     print("\n" + "=" * 80)
@@ -233,7 +344,7 @@ def print_tag_paths(found_tags, root_folder, tag_provider='default'):
         else:
             folder_path = ''
 
-        # Build full Ignition path
+        # Build full Ignition path (root_folder can now be nested like 'DELTAV_SYSTEM/BIOREACTOR/BRX001')
         if folder_path:
             ignition_path = '[' + tag_provider + ']' + root_folder + '/' + folder_path + '/' + display_name
         else:
@@ -265,7 +376,8 @@ def print_tag_paths(found_tags, root_folder, tag_provider='default'):
 
     print("\n" + "=" * 80)
     print("SUMMARY:")
-    print("  Folders: " + str(folder_count))
+    print("  Root folder levels: " + str(len([f for f in root_folder.split('/') if f.strip()])))
+    print("  Subfolders: " + str(folder_count))
     print("  Tags: " + str(tag_count))
     print("=" * 80)
 
@@ -320,7 +432,7 @@ def create_folder_structure(tag_provider, parent_path, folder_name):
     return folder_path
 
 
-def create_opc_tag(tag_provider, tag_path, tag_name, opc_server, opc_node_id, data_type='Float8'):
+def create_opc_tag(tag_provider, tag_path, tag_name, opc_server, opc_node_id, data_type=None):
     """
     Create an OPC tag in Ignition.
 
@@ -330,7 +442,7 @@ def create_opc_tag(tag_provider, tag_path, tag_name, opc_server, opc_node_id, da
         tag_name (str): Name of the tag
         opc_server (str): OPC server connection name
         opc_node_id (str): OPC UA node ID
-        data_type (str): Data type for the tag (default: Float8)
+        data_type (str): Data type for the tag. If None, will auto-detect from OPC server (default: None)
 
     Returns:
         bool: True if successful, False otherwise
@@ -351,6 +463,11 @@ def create_opc_tag(tag_provider, tag_path, tag_name, opc_server, opc_node_id, da
     if system.tag.exists(full_tag_path):
         print("Tag already exists, skipping: " + full_tag_path)
         return True
+
+    # Auto-detect data type if not provided
+    if data_type is None:
+        data_type = detect_opc_data_type(opc_server, opc_node_id)
+        print("Auto-detected data type for " + tag_name + ": " + data_type)
 
     # Create OPC tag configuration using node ID
     tag_config = {
@@ -375,16 +492,18 @@ def create_opc_tag(tag_provider, tag_path, tag_name, opc_server, opc_node_id, da
         return False
 
 
-def create_tags_from_list(found_tags, opc_server, tag_provider, root_folder, data_type='Float8', chunk_size=50):
+def create_tags_from_list(found_tags, opc_server, tag_provider, root_folder, data_type=None, chunk_size=50):
     """
     Create Ignition tags from the found tags list.
 
     Args:
         found_tags (list): List of tag information dictionaries
-        opc_server (str): OPC server connection name
+        opc_server (str): OPC server connection name (only used if data_type is provided)
         tag_provider (str): Tag provider name
-        root_folder (str): Root folder in Ignition
-        data_type (str): Data type for tags
+        root_folder (str): Root folder in Ignition. Can be:
+                           - Simple: 'BRX001'
+                           - Nested: 'DELTAV_SYSTEM/BIOREACTOR/CELL_CULTURE/BRX001'
+        data_type (str): Data type for tags. If None, will auto-detect from OPC server (default: None)
         chunk_size (int): Number of tags to create at once
 
     Returns:
@@ -394,10 +513,17 @@ def create_tags_from_list(found_tags, opc_server, tag_provider, root_folder, dat
     print("CREATING TAGS IN IGNITION")
     print("=" * 80)
 
-    # Create root folder
-    print("\nCreating root folder: " + root_folder)
-    root_path = create_folder_structure(tag_provider, '', root_folder)
-    folders_created = 1
+    # Create root folder (supports nested paths like 'DELTAV_SYSTEM/BIOREACTOR/BRX001')
+    print("\nCreating root folder structure: " + root_folder)
+    if '/' in root_folder:
+        # Nested folder path - use create_nested_folders
+        root_path = create_nested_folders(tag_provider, root_folder)
+        # Count how many folders were created (split by '/')
+        folders_created = len([f for f in root_folder.split('/') if f.strip()])
+    else:
+        # Simple single-level folder - use existing function
+        root_path = create_folder_structure(tag_provider, '', root_folder)
+        folders_created = 1
 
     # Build folder structure and tag configs
     print("\nAnalyzing folder structure...")
@@ -412,6 +538,8 @@ def create_tags_from_list(found_tags, opc_server, tag_provider, root_folder, dat
             relative_path = tag_info['relative_path']
             display_name = tag_info['display_name']
             node_id = tag_info['node_id']
+            # Get OPC server from tag_info (stored during browsing)
+            tag_opc_server = tag_info.get('opc_server', opc_server)
 
             # Split into folder structure and tag name
             path_parts = relative_path.split('/')
@@ -431,14 +559,14 @@ def create_tags_from_list(found_tags, opc_server, tag_provider, root_folder, dat
                     else:
                         current_path = current_path + '/' + folder_name
 
-            # Create the tag
+            # Create the tag with auto-detection if data_type is None
             success = create_opc_tag(
                 tag_provider,
                 current_path,
                 display_name,
-                opc_server,
+                tag_opc_server,
                 node_id,
-                data_type
+                data_type  # Pass None to auto-detect, or specific type to use that
             )
 
             if success:
@@ -483,6 +611,9 @@ def main():
     TAG_PROVIDER = 'default'
 
     # Root folder name in Ignition tag browser
+    # NEW V2.3: Can now be a nested path!
+    # Simple: 'BRX001' -> [default]BRX001/...
+    # Nested: 'DELTAV_SYSTEM/BIOREACTOR/CELL_CULTURE/BRX001' -> [default]DELTAV_SYSTEM/BIOREACTOR/CELL_CULTURE/BRX001/...
     ROOT_FOLDER = 'BRX001'
 
     # Tag name(s) to search for
@@ -492,8 +623,10 @@ def main():
     SEARCH_TAG_NAMES = ['CV', 'ACTUAL']  # Import both CV and ACTUAL tags
 
     # Data type for created tags
+    # NEW V2.3: Set to None to auto-detect from OPC server!
     # Common types: 'Float8', 'Float4', 'Int4', 'Int8', 'Boolean', 'String'
-    DATA_TYPE = 'Float8'
+    # Set to None to automatically detect from OPC values
+    DATA_TYPE = None  # Auto-detect data types from OPC server
 
     # Number of tags to create at once (smaller = slower but more reliable)
     CHUNK_SIZE = 50
@@ -507,7 +640,7 @@ def main():
     # ========== END CONFIGURATION ==========
 
     print("=" * 80)
-    print("DeltaV OPC Tag Import - Iterative Browsing")
+    print("DeltaV OPC Tag Import - V2.3")
     print("=" * 80)
     print("OPC Server: " + OPC_SERVER)
     print("Base Node: " + BASE_NODE_ID)
@@ -517,7 +650,12 @@ def main():
         print("Search Tag Names: " + str(SEARCH_TAG_NAMES))
     else:
         print("Search Tag Name: " + str(SEARCH_TAG_NAMES))
-    print("Data Type: " + DATA_TYPE)
+
+    if DATA_TYPE is None:
+        print("Data Type: Auto-detect from OPC server")
+    else:
+        print("Data Type: " + DATA_TYPE)
+
     print("DRY RUN: " + str(DRY_RUN))
     print("=" * 80 + "\n")
 
