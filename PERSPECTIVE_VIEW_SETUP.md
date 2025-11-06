@@ -80,131 +80,158 @@ system.tag.configure('[default]OPC_Import/Config', config_tags, 'o')
 print("Memory tags created successfully!")
 ```
 
-## Step 2: Create the Gateway Message Handler
+## Step 2: Add Import Functions to Project Library
 
-1. Go to **Gateway Webpage** > **Config** > **Scripting** > **Message Handlers**
-2. Click **Create new Message Handler**
+Before creating the message handler, we need to make the import functions available:
+
+1. Open **Ignition Designer**
+2. In the **Project Browser**, expand **Scripting**
+3. Right-click **Project Library** > **New Script**
+4. Name it: `opc_import`
+5. Copy the entire contents of `import_deltav_opc_tags_ui.py` and paste it into this script
+6. **Save the project**
+
+Now the functions will be available to the message handler via: `from project.opc_import import import_deltav_tags_ui`
+
+## Step 3: Create the Gateway Message Handler
+
+1. In the **Project Browser**, expand **Gateway Events**
+2. Right-click **Message Handlers** > **New Message Handler**
 3. Name it: `opc-import-handler`
-4. Scope: **Gateway**
-5. Paste this script:
+4. Paste this script:
 
 ```python
 # Message Handler: opc-import-handler
-# Scope: Gateway
+# Created in: Designer > Gateway Events > Message Handlers
+# Function signature must be: handleMessage(payload)
 
 import system.tag
 import system.util
+import system.date
 import time
 
 def update_progress(message):
-    """Write a progress message to the Progress tag"""
-    try:
-        # Get current progress
-        current = system.tag.readBlocking(['[default]OPC_Import/Progress'])[0].value
-        if current is None:
-            current = ''
+	"""Write a progress message to the Progress tag"""
+	try:
+		# Get current progress
+		current = system.tag.readBlocking(['[default]OPC_Import/Progress'])[0].value
+		if current is None:
+			current = ''
 
-        # Append new message with timestamp
-        timestamp = system.date.format(system.date.now(), 'HH:mm:ss')
-        new_message = '[' + timestamp + '] ' + message + '\n'
-        updated = current + new_message
+		# Append new message with timestamp
+		timestamp = system.date.format(system.date.now(), 'HH:mm:ss')
+		new_message = '[' + timestamp + '] ' + message + '\n'
+		updated = current + new_message
 
-        # Write back (keep last 10000 characters to prevent memory issues)
-        if len(updated) > 10000:
-            updated = updated[-10000:]
+		# Write back (keep last 10000 characters to prevent memory issues)
+		if len(updated) > 10000:
+			updated = updated[-10000:]
 
-        system.tag.writeBlocking(['[default]OPC_Import/Progress', '[default]OPC_Import/Status'],
-                                 [updated, message])
-    except Exception as e:
-        print('Error updating progress: ' + str(e))
+		system.tag.writeBlocking(['[default]OPC_Import/Progress', '[default]OPC_Import/Status'],
+		                         [updated, message])
+	except Exception as e:
+		print('Error updating progress: ' + str(e))
 
 def run_import_script():
-    """The actual import script - runs asynchronously"""
-    try:
-        # Set running flag
-        system.tag.writeBlocking(['[default]OPC_Import/IsRunning', '[default]OPC_Import/Progress'],
-                                 [True, ''])
+	"""The actual import script - runs asynchronously"""
+	try:
+		# Set running flag
+		system.tag.writeBlocking(['[default]OPC_Import/IsRunning', '[default]OPC_Import/Progress'],
+		                         [True, ''])
 
-        # Read configuration from tags
-        config_paths = [
-            '[default]OPC_Import/Config/OpcServer',
-            '[default]OPC_Import/Config/BaseNodeId',
-            '[default]OPC_Import/Config/TagProvider',
-            '[default]OPC_Import/Config/RootFolder',
-            '[default]OPC_Import/Config/SearchTagNames',
-            '[default]OPC_Import/Config/DataType',
-            '[default]OPC_Import/Config/DryRun',
-            '[default]OPC_Import/Config/MaxIterations'
-        ]
+		# Read configuration from tags
+		config_paths = [
+			'[default]OPC_Import/Config/OpcServer',
+			'[default]OPC_Import/Config/BaseNodeId',
+			'[default]OPC_Import/Config/TagProvider',
+			'[default]OPC_Import/Config/RootFolder',
+			'[default]OPC_Import/Config/SearchTagNames',
+			'[default]OPC_Import/Config/DataType',
+			'[default]OPC_Import/Config/DryRun',
+			'[default]OPC_Import/Config/MaxIterations'
+		]
 
-        config_values = system.tag.readBlocking(config_paths)
+		config_values = system.tag.readBlocking(config_paths)
 
-        opc_server = config_values[0].value
-        base_node_id = config_values[1].value
-        tag_provider = config_values[2].value
-        root_folder = config_values[3].value
-        search_tag_names_json = config_values[4].value
-        data_type = config_values[5].value
-        dry_run = config_values[6].value
-        max_iterations = config_values[7].value
+		opc_server = config_values[0].value
+		base_node_id = config_values[1].value
+		tag_provider = config_values[2].value
+		root_folder = config_values[3].value
+		search_tag_names_json = config_values[4].value
+		data_type = config_values[5].value
+		dry_run = config_values[6].value
+		max_iterations = config_values[7].value
 
-        # Parse search tag names from JSON
-        import json
-        search_tag_names = json.loads(search_tag_names_json)
+		# Parse search tag names from JSON
+		import json
+		search_tag_names = json.loads(search_tag_names_json)
 
-        update_progress('Starting DeltaV OPC Tag Import...')
-        update_progress('OPC Server: ' + opc_server)
-        update_progress('Base Node: ' + base_node_id)
-        update_progress('Search Tags: ' + str(search_tag_names))
-        update_progress('Dry Run: ' + str(dry_run))
-        update_progress('=' * 80)
+		update_progress('Starting DeltaV OPC Tag Import...')
+		update_progress('OPC Server: ' + opc_server)
+		update_progress('Base Node: ' + base_node_id)
+		update_progress('Search Tags: ' + str(search_tag_names))
+		update_progress('Dry Run: ' + str(dry_run))
+		update_progress('=' * 80)
 
-        # Import the script functions (you'll need to paste them here or import from project library)
-        # For now, we'll use the import_deltav_tags_ui function
-        # Copy the entire import_deltav_opc_tags_ui.py content here, OR
-        # Save it as a project library script and import it
+		# Import the functions from project library
+		# Make sure you completed Step 2 (added opc_import to project library)
+		from project.opc_import import import_deltav_tags_ui
 
-        # Call the import function with our update_progress callback
-        result = import_deltav_tags_ui(
-            opc_server=opc_server,
-            base_node_id=base_node_id,
-            tag_provider=tag_provider,
-            root_folder=root_folder,
-            search_tag_names=search_tag_names,
-            data_type=data_type,
-            chunk_size=50,
-            max_iterations=max_iterations,
-            dry_run=dry_run,
-            progress_callback=update_progress
-        )
+		# Call the import function with our update_progress callback
+		result = import_deltav_tags_ui(
+			opc_server=opc_server,
+			base_node_id=base_node_id,
+			tag_provider=tag_provider,
+			root_folder=root_folder,
+			search_tag_names=search_tag_names,
+			data_type=data_type,
+			chunk_size=50,
+			max_iterations=max_iterations,
+			dry_run=dry_run,
+			progress_callback=update_progress
+		)
 
-        update_progress('\n' + '=' * 80)
-        update_progress('IMPORT COMPLETE!')
-        update_progress('Tags found: ' + str(result.get('tags_found', 0)))
-        if not dry_run:
-            update_progress('Tags created: ' + str(result.get('tags_created', 0)))
-            update_progress('Folders created: ' + str(result.get('folders_created', 0)))
-        update_progress('=' * 80)
+		update_progress('\n' + '=' * 80)
+		update_progress('IMPORT COMPLETE!')
+		update_progress('Tags found: ' + str(result.get('tags_found', 0)))
+		if not dry_run:
+			update_progress('Tags created: ' + str(result.get('tags_created', 0)))
+			update_progress('Folders created: ' + str(result.get('folders_created', 0)))
+		update_progress('=' * 80)
 
-    except Exception as e:
-        update_progress('\nERROR: ' + str(e))
-        import traceback
-        update_progress(traceback.format_exc())
-    finally:
-        # Clear running flag
-        system.tag.writeBlocking(['[default]OPC_Import/IsRunning', '[default]OPC_Import/PercentComplete'],
-                                 [False, 100])
+	except Exception as e:
+		update_progress('\nERROR: ' + str(e))
+		import traceback
+		update_progress(traceback.format_exc())
+	finally:
+		# Clear running flag
+		system.tag.writeBlocking(['[default]OPC_Import/IsRunning', '[default]OPC_Import/PercentComplete'],
+		                         [False, 100])
 
-# Main message handler entry point
-if payload.get('action') == 'start_import':
-    # Run the import script asynchronously so it doesn't block
-    system.util.invokeAsynchronous(run_import_script)
-    return {'status': 'started', 'message': 'Import started in background'}
-else:
-    return {'status': 'error', 'message': 'Unknown action'}
+# ========== MAIN MESSAGE HANDLER FUNCTION ==========
+# This is the required function signature for Ignition message handlers
+def handleMessage(payload):
+	"""
+	Main message handler entry point.
+
+	Args:
+		payload (dict): Dictionary containing message data
+
+	Returns:
+		dict: Response dictionary
+	"""
+	# Get the action from payload
+	action = payload['action']
+
+	if action == 'start_import':
+		# Run the import script asynchronously so it doesn't block
+		system.util.invokeAsynchronous(run_import_script)
+		return {'status': 'started', 'message': 'Import started in background'}
+	else:
+		return {'status': 'error', 'message': 'Unknown action: ' + str(action)}
 ```
 
-## Step 3: Create the Perspective View
+## Step 4: Create the Perspective View
 
 ### View JSON Structure:
 
@@ -281,7 +308,7 @@ system.tag.writeBlocking(['[default]OPC_Import/Progress'], [''])
 └─────────────────────────────────────────┘
 ```
 
-## Step 4: Test the Setup
+## Step 5: Test the Setup
 
 1. **First Test - Dry Run:**
    - Set Dry Run = True
@@ -299,22 +326,22 @@ system.tag.writeBlocking(['[default]OPC_Import/Progress'], [''])
    - Click "Start Import" again
    - Watch tags being created in real-time
 
-## Alternative: Using a Project Library Script
+## Important Notes
 
-Instead of pasting all code into the message handler, save it as a project library script:
+### Project Library Script Location
 
-1. In Designer, go to **Project Library** > **Right-click** > **New Script**
-2. Name it: `opc_import`
-3. Paste the entire `import_deltav_opc_tags_ui.py` content
-4. In the message handler, use:
+The import functions MUST be in the project library (Step 2) because:
+- Message handlers are gateway-scoped
+- They can't access modules from external files
+- Project library scripts are available to all gateway scripts
 
-```python
-# Import from project library
-from opc_import import import_deltav_tags_ui
+### If Import Fails
 
-# Then call it normally
-result = import_deltav_tags_ui(...)
-```
+If you get `ImportError: No module named project.opc_import`:
+1. Verify the script is saved in Project Library (not a module folder)
+2. Script name must be exactly `opc_import` (no .py extension shown in Designer)
+3. Save the project after adding the script
+4. The import line should be: `from project.opc_import import import_deltav_tags_ui`
 
 ## Benefits of This Approach
 
